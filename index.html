@@ -37,23 +37,44 @@
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0,0,0,0.6);
-      padding: 6px 12px;
+      padding: 2px 2px;
       border-radius: 10px;
       color: white;
       display: flex;
-      gap: 10px;
+      gap: 5px;
       align-items: center;
     }
-    .bottom-bar {
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      display: flex;
-      justify-content: space-around;
-      padding: 6px;
-    }
+    .bottom-banner {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  /* background: rgb(0, 0, 0); */
+  background: transparent;
+  /* box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.2); */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  z-index: 9998;
+  padding: 10px 5px;
+}
+
+.bottom-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 5px;
+}
+
+.bottom-panel button {
+  margin: 4px 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+}
+
     .floating-left {
       bottom: 80px;
       left: 10px;
@@ -68,7 +89,7 @@
       flex-direction: column;
       gap: 10px;
     }
-    .round-button {
+    /* .round-button {
       width: 45px;
       height: 45px;
       border-radius: 50%;
@@ -76,15 +97,37 @@
       color: white;
       border: none;
       font-size: 18px;
-    }
+    } */
+
+    .round-button {
+  width: 50px;
+  height: 50px;
+  background-color: black; /* or green etc. */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: background 0.3s;
+}
+
+.round-button:hover {
+  background-color: #333;
+}
+
     .media-panel {
-      right: 60px;
-      bottom: 80px;
+      right: 8px;
+      bottom: 140px;
       display: none;
       flex-direction: column;
       gap: 8px;
-      background: rgba(0,0,0,0.9);
-      padding: 10px;
+      /* background: rgba(0,0,0,0.9); */
+      background: transparent;
+      padding: 02px;
       border-radius: 8px;
     }
     .media-panel.open {
@@ -92,15 +135,16 @@
     }
   </style>
 </head>
+
 <body>
 
 <div id="map"></div>
 
 <!-- Top tracker bar -->
 <div class="top-bar">
-  <button class="round-button" onclick="startTracking()">▶️</button>
-  <button class="round-button" onclick="togglePause()">⏸</button>
-  <button class="round-button" onclick="stopTracking()">⏹</button>
+  <button id="startBtn" class="round-button" onclick="startTracking()">▶️</button>
+  <button id="pauseBtn" class="round-button" onclick="togglePause()">⏸</button>
+  <button id="stopBtn" class="round-button" onclick="stopTracking()">⏹</button>
   <span id="timer">00:00:00</span> |
   <span id="distance">0.00 km</span>
 </div>
@@ -117,28 +161,57 @@
 </div>
 
 <div class="media-panel" id="mediaPanel">
-  <button class="round-button" onclick="capturePhoto()">📸</button>
+  <button id="takePhotoBtn" class="round-button" onclick="capturePhoto()">📸</button>
   <button class="round-button" onclick="addTextNote()">📝</button>
-  <button class="round-button" onclick="recordAudio()">🎙️</button>
+  <!-- <button class="round-button" onclick="recordAudio()">🎙️</button> -->
   <button class="round-button" onclick="showRouteDataOnMap()">🗺️</button>
 </div>
 
-<!-- Bottom tab bar -->
-<div class="bottom-bar">
-  <button onclick="prepareAndExport()">📦 Export</button>
-  <button onclick="toggleArchivePanel()">📜 Archive</button>
-  <button onclick="toggleDevTools()">🛠 Dev</button>
+<!-- Bottom Navigation Bar -->
+<div id="bottomNav" class="bottom-nav">
+  <button onclick="togglePanel('exportPanel')">📤 Export</button>
+  <button onclick="togglePanel('summaryPanel')">📚 Summaries</button>
+  <button onclick="togglePanel('devToolsPanel')">🛠️ Dev Tools</button>
 </div>
+
+<!-- Panels -->
+<div id="exportPanel" class="bottom-popup hidden">
+  <button id="prepareAndExportBtn" onclick="prepareAndExport()">📦 Export Last Route</button>
+  <button id="exportAllRoutesBtn" onclick="exportAllRoutes()">🌍 Export All Routes</button>
+  <button id="exportDataBtn" onclick="exportData()">📄 JSON</button>
+  <button id="exportPDFBtn" onclick="exportPDF()">📄 PDF</button>
+  <button id="exportGPXBtn" onclick="exportGPX()">📍 GPX</button>
+</div>
+
+<div id="summaryPanel" class="bottom-popup hidden">
+  <button id="toggleArchivePanelBtn" onclick="toggleArchivePanel()">📜 Browse Summaries</button>
+  <button id="clearArchiveBtnBtn" onclick="SummaryArchive.clearAll()">🗑️ Clear All Summaries</button>
+  <button id="clearAllSessionsBtn" onclick="clearAllSessions()">🗑️ Clear Saved Routes</button>
+  <button id="clearAllAppDataBtn" onclick="clearAllAppData()">🧹 Clear Everything</button>
+</div>
+
+<div id="devToolsPanel" class="bottom-popup hidden">
+  <button onclick="showStorageMonitor()">🧪 Storage Monitor</button>
+  <button onclick="triggerImport()">📥 Import Route (JSON/GPX)</button>
+  <button id="resetBtn" onclick="confirmAndResetApp()">📍 Reset App</button>
+</div>
+
+
 
 <!-- Hidden elements preserved for app logic -->
 <div id="controls" style="display:none;"></div>
 <div id="archivePanel" class="toggle-panel" style="display:none;"></div>
 <div id="historyPanel" style="display:none;"><ul id="historyList"></ul></div>
-<div id="accessibilityOverlay" style="display:none;"><div id="accessibilityFormContainer"></div></div>
+<!-- <div id="accessibilityOverlay" style="display:none;"><div id="accessibilityFormContainer"></div></div> -->
 <!-- <canvas id="elevationChart" style="display:none;"></canvas> -->
 <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;" />
 <input type="file" id="videoInput" accept="video/*" capture style="display:none;" />
 <input type="file" id="importFile" accept=".json,.gpx" style="display:none;" />
+
+<div class="sessions">
+      <h3>📂 Saved Routes</h3>
+      <ul id="savedSessionsList"></ul>
+    </div>
 
 <div id="accessibilityOverlay" style="display:none;">
   <div id="accessibilityFormContainer">
