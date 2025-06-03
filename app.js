@@ -160,6 +160,24 @@ function initMap(callback) {
   if (callback) callback();
 }
 
+function togglePanel(id) {
+  const panels = ['exportPanel', 'summaryPanel', 'devToolsPanel'];
+
+  panels.forEach(panelId => {
+    const el = document.getElementById(panelId);
+    if (panelId !== id) {
+      el?.classList.add('hidden');
+    }
+  });
+
+  const selected = document.getElementById(id);
+  if (selected) {
+    selected.classList.toggle('hidden');
+  }
+}
+
+
+
 
 // === BACKUP & AUTOSAVE ===
 let autoSaveInterval = null;
@@ -1036,6 +1054,8 @@ window.generateShareableLink = function () {
 // === ON LOAD SHARED LINK HANDLER ===
 
 window.onload = function () {
+
+  toggleDarkMode()
 
   window.addEventListener("beforeunload", function (e) {
   if (isTracking) {
