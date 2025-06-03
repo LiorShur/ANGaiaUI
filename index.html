@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv='cache-control' content='no-cache'> 
+  <meta http-equiv='expires' content='0'> 
+  <meta http-equiv='pragma' content='no-cache'>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Access Nature</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.7.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+    #mapContainer, #map {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #e0e0e0;
+  z-index: 0;
+}
+    .top-bar, .bottom-bar, .media-panel, .floating-left, .floating-right {
+      position: absolute;
+      z-index: 1000;
+    }
+    .top-bar {
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      padding: 6px 12px;
+      border-radius: 10px;
+      color: white;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .bottom-bar {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 6px;
+    }
+    .floating-left {
+      bottom: 80px;
+      left: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .floating-right {
+      bottom: 80px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .round-button {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.85);
+      color: white;
+      border: none;
+      font-size: 18px;
+    }
+    .media-panel {
+      right: 60px;
+      bottom: 80px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(0,0,0,0.9);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .media-panel.open {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- Top tracker bar -->
+<div class="top-bar">
+  <button class="round-button" onclick="startTracking()">▶️</button>
+  <button class="round-button" onclick="togglePause()">⏸</button>
+  <button class="round-button" onclick="stopTracking()">⏹</button>
+  <span id="timer">00:00:00</span> |
+  <span id="distance">0.00 km</span>
+</div>
+
+<!-- Floating control buttons -->
+<div class="floating-left">
+  <button class="round-button" onclick="toggleMapOrientation()">🧭</button>
+  <button class="round-button" onclick="openAccessibilityForm()">♿</button>
+  <button class="round-button" onclick="toggleDarkMode()">🌓</button>
+</div>
+
+<div class="floating-right">
+  <button class="round-button" onclick="toggleMediaPanel()">➕</button>
+</div>
+
+<div class="media-panel" id="mediaPanel">
+  <button class="round-button" onclick="capturePhoto()">📸</button>
+  <button class="round-button" onclick="addTextNote()">📝</button>
+  <button class="round-button" onclick="recordAudio()">🎙️</button>
+  <button class="round-button" onclick="showRouteDataOnMap()">🗺️</button>
+</div>
+
+<!-- Bottom tab bar -->
+<div class="bottom-bar">
+  <button onclick="prepareAndExport()">📦 Export</button>
+  <button onclick="toggleArchivePanel()">📜 Archive</button>
+  <button onclick="toggleDevTools()">🛠 Dev</button>
+</div>
+
+<!-- Hidden elements preserved for app logic -->
+<div id="controls" style="display:none;"></div>
+<div id="archivePanel" class="toggle-panel" style="display:none;"></div>
+<div id="historyPanel" style="display:none;"><ul id="historyList"></ul></div>
+<div id="accessibilityOverlay" style="display:none;"><div id="accessibilityFormContainer"></div></div>
+<!-- <canvas id="elevationChart" style="display:none;"></canvas> -->
+<input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;" />
+<input type="file" id="videoInput" accept="video/*" capture style="display:none;" />
+<input type="file" id="importFile" accept=".json,.gpx" style="display:none;" />
+
+<div id="accessibilityOverlay" style="display:none;">
+  <div id="accessibilityFormContainer">
+    <h2>🧭 Accessibility Questionnaire</h2>
+    <form id="accessibilityForm">
+      <button type="button" onclick="closeAccessibilityForm()">🚪 סגור</button>
+
+      <label>חניות נכים – כמה:</label>
+      <input type="number" name="disabledParkingCount" required>
+      <label>תמונה:</label>
+      <input type="file" name="disabledParkingImage" accept="image/*"><br><br>
+
+      <label>תיאור הדרך:</label>
+      <select name="pathType" required>
+        <option value="">בחר</option>
+        <option>אספלט</option>
+        <option>בטון</option>
+        <option>דק עץ</option>
+        <option>שביל כורכר (לא נגיש)</option>
+      </select>
+      <label>תמונה:</label>
+      <input type="file" name="pathImage" accept="image/*"><br><br>
+
+      <label>אורך הדרך הנגישה (במטרים):</label>
+      <input type="number" name="accessibleLength" required>
+
+      <label>סוג המסלול:</label>
+      <select name="routeType">
+        <option>הלוך חזור</option>
+        <option>מעגלי</option>
+      </select>
+
+      <label>שיפוע השביל:</label>
+      <select name="slope">
+        <option>אופקי</option>
+        <option>שיפועים מתונים</option>
+        <option>שיפועים תלולים (לא נגיש)</option>
+      </select>
+
+      <label>נקודות עניין לאורך הדרך:</label>
+      <textarea name="pointsOfInterest"></textarea>
+      <label>תמונה:</label>
+      <input type="file" name="poiImage" accept="image/*"><br><br>
+
+      <label>תצפיות:</label>
+      <input type="checkbox" name="lookouts"> יש
+      <label>תמונה:</label>
+      <input type="file" name="lookoutImage" accept="image/*"><br><br>
+
+      <label>פינות פיקניק נגישות:</label>
+      <input type="checkbox" name="picnicSpots"> יש
+      <label>תמונה:</label>
+      <input type="file" name="picnicImage" accept="image/*"><br><br>
+
+      <label>שירותי נכים:</label>
+      <input type="checkbox" name="accessibleToilets"> יש
+      <label>תמונה:</label>
+      <input type="file" name="toiletImage" accept="image/*"><br><br>
+
+      <label>ספסלים לאורך הדרך:</label>
+      <input type="checkbox" name="benches"> יש
+      <label>תמונה:</label>
+      <input type="file" name="benchImage" accept="image/*"><br><br>
+
+      <label>הצללה:</label>
+      <select name="shade">
+        <option>מוצל</option>
+        <option>מוצל חלקית</option>
+        <option>לא מוצל</option>
+      </select><br><br>
+
+      <button type="submit">✔️ שמור</button>
+      <button type="button" onclick="closeAccessibilityForm()">❌ ביטול</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleMediaPanel() {
+    const panel = document.getElementById("mediaPanel");
+    panel.classList.toggle("open");
+  }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="app.js"></script>
+
+<!-- Developer Tools Panel -->
+<div id="developerToolsPanel" class="bottom-panel" style="display:none;">
+  <button onclick="toggleDarkMode()">🌙☀️ Dark/Light Mode</button>
+  <button id="clearAllAppDataBtn" onclick="clearAllAppData()">🧹 Clear Everything</button>
+  <button id="clearAllSessionsBtn" onclick="clearAllSessions()">🗑️ Clear All Saved Routes</button>
+  <button id="resetBtn" onclick="confirmAndResetApp()">📍**!Reset App!**📍</button>
+  <button onclick="triggerImport()">📥 Import Route (JSON/GPX)</button>
+  <button onclick="showPhotoCleanupDialog()">📥 Handle photos (JSON/GPX)</button>
+</div>
+
+</body>
+</html>
