@@ -1253,8 +1253,8 @@ const SummaryArchive = (() => {
       const li = document.createElement("li");
       li.innerHTML = `
         <b>${item.name}</b> (${item.date.split("T")[0]})
-        <button onclick="SummaryArchive.viewSummary(${item.id})">View</button>
-        <button onclick="SummaryArchive.deleteSummary(${item.id})">Delete</button>
+        <button class="toggle panel button" onclick="SummaryArchive.viewSummary(${item.id})">View</button>
+        <button class="toggle panel button" onclick="SummaryArchive.deleteSummary(${item.id})">Delete</button>
       `;
       ul.appendChild(li);
     });
