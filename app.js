@@ -1155,14 +1155,14 @@ window.onload = function () {
 
 function toggleArchivePanel() {
   const panel = document.getElementById("archivePanel");
-  const arrow = document.getElementById("archiveArrow");
+  //const arrow = document.getElementById("archiveArrow");
 
   panel.classList.toggle("open");
   if (panel.classList.contains("open")) {
-    arrow.textContent = "▲";
+    //arrow.textContent = "▲";
     SummaryArchive.showArchiveBrowser("archivePanel");
   } else {
-    arrow.textContent = "▼";
+    //arrow.textContent = "▼";
   }
 }
 
