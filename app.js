@@ -76,6 +76,8 @@ function setControlButtonsEnabled(enabled) {
 //   }
 // });
 
+document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
+
 function toggleRotation() {
   rotationEnabled = !rotationEnabled;
   const mapEl = document.getElementById("map");
