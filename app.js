@@ -13,6 +13,7 @@ let audioChunks = [];
 let isTracking = false;
 let rotationEnabled = false;
 let currentHeading = 0;
+let lastHeading = 0;
 
 
 function setControlButtonsEnabled(enabled) {
@@ -41,11 +42,39 @@ function setControlButtonsEnabled(enabled) {
     }
   });
 }
-document.getElementById("toggleRotationBtn").addEventListener("click", () => {
+// document.getElementById("toggleRotationBtn").addEventListener("click", () => {
+//   rotationEnabled = !rotationEnabled;
+//   document.getElementById("toggleRotationBtn").style.background = rotationEnabled ? "green" : "black";
+//   if (!rotationEnabled) {
+//     document.getElementById("map").style.transform = "rotate(0deg)";
+//   }
+// });
+
+let rotationEnabled = false;
+let lastHeading = 0;
+
+const toggleRotationButton = document.getElementById("rotationToggle");
+toggleRotationButton.addEventListener("click", () => {
   rotationEnabled = !rotationEnabled;
-  document.getElementById("toggleRotationBtn").style.background = rotationEnabled ? "green" : "black";
+
   if (!rotationEnabled) {
-    document.getElementById("map").style.transform = "rotate(0deg)";
+    // 💡 Stop device orientation updates
+    window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
+    window.removeEventListener("deviceorientation", handleOrientation, true);
+
+    // 💡 Reset rotation CSS
+    const container = document.getElementById("map");
+    container.style.transform = "rotate(0deg)";
+    container.style.transition = "transform 0.3s ease-out";
+
+    // Optionally reset map bearing visually
+    map.setBearing?.(0); // if using a plugin that supports setBearing
+  } else {
+    // 💡 Start listening again
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+      window.addEventListener("deviceorientation", handleOrientation, true);
+    }
   }
 });
 
