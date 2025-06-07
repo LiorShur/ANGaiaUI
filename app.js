@@ -80,6 +80,10 @@ document.getElementById("rotationToggle").addEventListener("click", toggleRotati
 
 function handleOrientation(event) {
   if (!rotationEnabled) return;
+  if (map.getZoom() > 12) {
+  map.setZoom(map.getZoom() - 1); // Adjust based on your preferred level
+  }
+  updateCompass(rotateDeg);
 
   const rotateDeg = 360 - event.alpha;
   currentRotation = rotateDeg;
@@ -109,6 +113,11 @@ function toggleRotation() {
 
   map.invalidateSize();
 }
+
+function updateCompass(angle) {
+  document.getElementById("compassIcon").style.transform = `rotate(${angle}deg)`;
+}
+
 
 window.addEventListener("deviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation", e => {
   if (e.absolute || e.webkitCompassHeading !== undefined) {
@@ -585,6 +594,10 @@ window.startTracking = function () {
       }
     }, true);
   }
+  if (rotationEnabled) {
+  handleOrientation({ alpha: currentRotation || 0 });
+}
+
 };
 
 // let followHeading = false;
