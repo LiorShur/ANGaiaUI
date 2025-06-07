@@ -78,14 +78,18 @@ function setControlButtonsEnabled(enabled) {
 
 document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
 
+let rotationEnabled = false;
+let headingListenerAttached = false;
+
 function handleOrientation(event) {
   if (!rotationEnabled) return;
 
-  const heading = event.alpha ?? 0;
+  const heading = event.alpha;
+  if (heading == null) return;
+
   const rotateDeg = 360 - heading;
   const wrapper = document.getElementById("mapWrapper");
-
-  wrapper.style.transform = `translate(-50%, -50%) rotate(${rotateDeg}deg) scale(1.2)`;
+  wrapper.style.transform = `rotate(${rotateDeg}deg) scale(1.1)`;
 }
 
 function toggleRotation() {
@@ -98,14 +102,13 @@ function toggleRotation() {
       headingListenerAttached = true;
     }
   } else {
-    wrapper.style.transform = `translate(-50%, -50%) rotate(0deg) scale(1)`;
+    wrapper.style.transform = "rotate(0deg) scale(1)";
     window.removeEventListener("deviceorientation", handleOrientation, true);
     headingListenerAttached = false;
   }
 
-  map.invalidateSize(); // force recalculation
+  map.invalidateSize();
 }
-
 
 window.addEventListener("deviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation", e => {
   if (e.absolute || e.webkitCompassHeading !== undefined) {
