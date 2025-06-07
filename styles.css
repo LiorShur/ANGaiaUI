@@ -37,13 +37,13 @@ body, html {
 }
 
 #map {
-  width: 100vw; /* make it wider to cover rotated corners */
+  width: 100vw;
   height: 100vh;
   position: absolute;
   top: 0;
-  left: 0; 
+  left: 0;
   transform-origin: center center;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease-out;
 }
 
 #compass {
