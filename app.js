@@ -80,19 +80,17 @@ document.getElementById("rotationToggle").addEventListener("click", toggleRotati
 
 function handleOrientation(event) {
   if (!rotationEnabled) return;
+
   const heading = event.alpha ?? 0;
-  lastHeading = heading;
-
-  const wrapper = document.getElementById("mapWrapper");
   const rotateDeg = 360 - heading;
+  const wrapper = document.getElementById("mapWrapper");
 
-  wrapper.style.transform = `rotate(${rotateDeg}deg) scale(1.2)`;
+  wrapper.style.transform = `translate(-50%, -50%) rotate(${rotateDeg}deg) scale(1.2)`;
 }
 
 function toggleRotation() {
-  rotationEnabled = !rotationEnabled;
-
   const wrapper = document.getElementById("mapWrapper");
+  rotationEnabled = !rotationEnabled;
 
   if (rotationEnabled) {
     if (!headingListenerAttached && window.DeviceOrientationEvent) {
@@ -100,11 +98,12 @@ function toggleRotation() {
       headingListenerAttached = true;
     }
   } else {
-    wrapper.style.transform = "rotate(0deg) scale(1)";
+    wrapper.style.transform = `translate(-50%, -50%) rotate(0deg) scale(1)`;
     window.removeEventListener("deviceorientation", handleOrientation, true);
     headingListenerAttached = false;
-    map.invalidateSize(); // Recalculate layout
   }
+
+  map.invalidateSize(); // force recalculation
 }
 
 
