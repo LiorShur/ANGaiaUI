@@ -81,22 +81,29 @@ document.getElementById("rotationToggle").addEventListener("click", toggleRotati
 function handleOrientation(event) {
   if (!rotationEnabled) return;
 
-  const heading = event.alpha;
-  if (heading == null) return;
+  const rotateDeg = 360 - event.alpha;
+  currentRotation = rotateDeg;
 
-  const rotateDeg = 360 - heading;
   const wrapper = document.getElementById("mapWrapper");
-  wrapper.style.transform = `rotate(${rotateDeg}deg) scale(1.8)`;
+  const mapEl = document.getElementById("map");
+
+  // Apply same transform to both elements
+  wrapper.style.transform = `rotate(${rotateDeg}deg) scale(2)`;
+  mapEl.style.transform = `rotate(${rotateDeg}deg) scale(2)`;
 }
 
 function toggleRotation() {
   const wrapper = document.getElementById("mapWrapper");
+  const mapEl = document.getElementById("map");
+
   rotationEnabled = !rotationEnabled;
 
   if (rotationEnabled) {
     window.addEventListener("deviceorientation", handleOrientation, true);
   } else {
     wrapper.style.transform = "rotate(0deg) scale(1)";
+    mapEl.style.transform = "rotate(0deg) scale(1)";
+    currentRotation = 0;
     window.removeEventListener("deviceorientation", handleOrientation, true);
   }
 
