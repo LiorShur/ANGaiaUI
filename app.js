@@ -78,9 +78,6 @@ function setControlButtonsEnabled(enabled) {
 
 document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
 
-let rotationEnabled = false;
-let headingListenerAttached = false;
-
 function handleOrientation(event) {
   if (!rotationEnabled) return;
 
