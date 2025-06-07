@@ -20,18 +20,13 @@ body, html {
 /*   font-weight: bold; */
 }
 
-#mapContainer, #map {
+#mapContainer{
   position: absolute;
   top: 0; left: 0;
   width: 100vw;
   height: 100vh;
   background: #e0e0e0;
   z-index: 0;
-}
-
-#map{
-  transform-origin: center center;
-  transition: transform 0.3s ease;
 }
 
 #mapWrapper {
@@ -42,8 +37,11 @@ body, html {
 }
 
 #map {
-  width: 100%;
-  height: 100%;
+  width: 150vw; /* make it wider to cover rotated corners */
+  height: 150vh;
+  position: absolute;
+  top: -25vh;
+  left: -25vw;
   transform-origin: center center;
   transition: transform 0.3s ease;
 }
