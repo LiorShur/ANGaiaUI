@@ -347,7 +347,7 @@ function handleOrientation(event) {
   const rotation = 360 - heading;
 
   const container = document.getElementById("map");
-  container.style.transform = `rotate(${rotation}deg) scale(1.05)`; // slight scale to fill edges
+  container.style.transform = `rotate(${rotation}deg) scale(1.50)`; // slight scale to fill edges
   container.style.transition = "transform 0.3s ease-out";
 
   lastHeading = heading;
