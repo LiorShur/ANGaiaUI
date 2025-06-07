@@ -11,6 +11,9 @@ let elapsedTime = 0;
 let mediaRecorder;
 let audioChunks = [];
 let isTracking = false;
+let rotationEnabled = false;
+let currentHeading = 0;
+
 
 function setControlButtonsEnabled(enabled) {
   const idsToDisable = [
@@ -38,6 +41,22 @@ function setControlButtonsEnabled(enabled) {
     }
   });
 }
+document.getElementById("toggleRotationBtn").addEventListener("click", () => {
+  rotationEnabled = !rotationEnabled;
+  document.getElementById("toggleRotationBtn").style.background = rotationEnabled ? "green" : "black";
+  if (!rotationEnabled) {
+    document.getElementById("map").style.transform = "rotate(0deg)";
+  }
+});
+
+window.addEventListener("deviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation", e => {
+  if (e.absolute || e.webkitCompassHeading !== undefined) {
+    const heading = e.webkitCompassHeading || 360 - e.alpha;
+    currentHeading = heading;
+    rotateMap(currentHeading);
+  }
+});
+
 
 
 function setTrackingButtonsEnabled(enabled) {
@@ -287,6 +306,25 @@ function haversineDistance(coord1, coord2) {
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
+function rotateMap(deg) {
+  if (!rotationEnabled) return;
+  const mapEl = document.getElementById("map");
+  mapEl.style.transformOrigin = "center center";
+  mapEl.style.transition = "transform 0.3s ease";
+  mapEl.style.transform = `rotate(${-deg}deg)`; // negative to match heading
+}
+
+function getBearing(start, end) {
+  const dLon = (end.lng - start.lng) * Math.PI / 180;
+  const lat1 = start.lat * Math.PI / 180;
+  const lat2 = end.lat * Math.PI / 180;
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+  const brng = Math.atan2(y, x) * 180 / Math.PI;
+  return (brng + 360) % 360;
+}
+
+
 // === ROUTE TRACKING ===
 
 function disableStartButton() {
@@ -420,6 +458,11 @@ window.startTracking = function () {
           if (dist < 0.005) return; // Jitter
           totalDistance += dist;
         }
+
+        if (rotationEnabled && !("ondeviceorientationabsolute" in window || "ondeviceorientation" in window)) {
+            const simulatedBearing = getBearing(lastCoords, latLng);
+            rotateMap(simulatedBearing);
+          }
 
         lastCoords = latLng;
         path.push(latLng);
