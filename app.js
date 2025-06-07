@@ -50,6 +50,48 @@ function setTrackingButtonsEnabled(enabled) {
   if (stopBtn) stopBtn.disabled = !enabled;
 }
 
+let lastHeadingCoords = null;
+
+function computeBearing(a, b) {
+  const toRad = x => x * Math.PI / 180;
+  const toDeg = x => x * 180 / Math.PI;
+  const dLon = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) -
+            Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function rotateMapTo(bearing) {
+  const mapEl = document.getElementById("map");
+  mapEl.style.transform = `rotate(${-bearing}deg)`;
+
+  document.querySelectorAll(".leaflet-marker-icon, .leaflet-popup").forEach(el => {
+    el.style.transform = `rotate(${bearing}deg)`;
+  });
+}
+
+function updateCompass(bearing) {
+  const compass = document.getElementById("compass");
+  if (compass) compass.style.transform = `rotate(${bearing}deg)`;
+}
+
+function simulateHeadingFromMovement(newCoords) {
+  if (!lastHeadingCoords) {
+    lastHeadingCoords = newCoords;
+    return;
+  }
+
+  const bearing = computeBearing(lastHeadingCoords, newCoords);
+  rotateMapTo(bearing);
+  updateCompass(bearing);
+  lastHeadingCoords = newCoords;
+}
+
+
 const noteIcon = L.divIcon({
   className: 'custom-icon note-icon',
   html: '📝',
@@ -318,6 +360,40 @@ function disableStartButton() {
 //   }
 // };
 
+// window.startTracking = function () {
+//   openAccessibilityForm();
+
+//   setTrackingButtonsEnabled(true);
+//   document.getElementById("startBtn").disabled = true;
+//   document.getElementById("resetBtn").disabled = true;
+//   document.getElementById("takePhotoBtn").disabled = false;
+
+//   isTracking = true;
+//   setControlButtonsEnabled(false);
+//   startAutoBackup();
+
+//   if (!navigator.geolocation) {
+//     alert("Geolocation not supported");
+//     return;
+//   }
+
+//   // Tracking logic
+//   watchId = navigator.geolocation.watchPosition(
+//     positionHandler,
+//     err => console.error("GPS error:", err),
+//     {
+//       enableHighAccuracy: true,
+//       maximumAge: 0,
+//       timeout: 5000
+//     }
+//   );
+
+//   startTime = Date.now() - elapsedTime;
+//   clearInterval(timerInterval);
+//   updateTimerDisplay();
+//   timerInterval = setInterval(updateTimerDisplay, 1000);
+// };
+
 window.startTracking = function () {
   openAccessibilityForm();
 
@@ -330,26 +406,65 @@ window.startTracking = function () {
   setControlButtonsEnabled(false);
   startAutoBackup();
 
-  if (!navigator.geolocation) {
+  if (navigator.geolocation) {
+    watchId = navigator.geolocation.watchPosition(
+      position => {
+        const { latitude, longitude, accuracy } = position.coords;
+        if (accuracy > 50) return;
+
+        const latLng = { lat: latitude, lng: longitude };
+
+        if (lastCoords) {
+          const dist = haversineDistance(lastCoords, latLng);
+          if (dist > 1) return;     // GPS jump
+          if (dist < 0.005) return; // Jitter
+          totalDistance += dist;
+        }
+
+        lastCoords = latLng;
+        path.push(latLng);
+        marker.setLatLng(latLng);
+        map.panTo(latLng, { animate: true });
+
+        if (path.length > 1) {
+          const segment = [path[path.length - 2], path[path.length - 1]];
+          L.polyline(segment, { color: 'green', weight: 4 }).addTo(map);
+        }
+
+        routeData.push({
+          type: "location",
+          timestamp: Date.now(),
+          coords: latLng
+        });
+
+        document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
+
+        // Simulate heading
+        simulateHeadingFromMovement(latLng);
+      },
+      err => console.error("GPS error:", err),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+    );
+
+    startTime = Date.now() - elapsedTime;
+    clearInterval(timerInterval);
+    updateTimerDisplay();
+    timerInterval = setInterval(updateTimerDisplay, 1000);
+
+  } else {
     alert("Geolocation not supported");
-    return;
   }
 
-  // Tracking logic
-  watchId = navigator.geolocation.watchPosition(
-    positionHandler,
-    err => console.error("GPS error:", err),
-    {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 5000
-    }
-  );
-
-  startTime = Date.now() - elapsedTime;
-  clearInterval(timerInterval);
-  updateTimerDisplay();
-  timerInterval = setInterval(updateTimerDisplay, 1000);
+  // Listen for real heading if supported
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener("deviceorientationabsolute", e => {
+      if (e.absolute && e.alpha != null) {
+        const heading = 360 - e.alpha;
+        rotateMapTo(heading);
+        updateCompass(heading);
+      }
+    }, true);
+  }
 };
 
 let followHeading = false;
