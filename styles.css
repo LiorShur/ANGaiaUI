@@ -154,6 +154,21 @@ html, body {
   background-color: #333;
 }
 
+.media-panel {
+      right: 8px;
+      bottom: 140px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      /* background: rgba(0,0,0,0.9); */
+      background: transparent;
+      padding: 02px;
+      border-radius: 8px;
+    }
+    .media-panel.open {
+      display: flex;
+    }
+
  .bottom-nav {
   position: fixed;
   bottom: 0;
