@@ -251,6 +251,70 @@ function disableStartButton() {
   }
 }
 
+// window.startTracking = function () {
+//   openAccessibilityForm();
+
+//   setTrackingButtonsEnabled(true);
+//   document.getElementById("startBtn").disabled = true;
+//   document.getElementById("resetBtn").disabled = true;
+//   document.getElementById("takePhotoBtn").disabled = false;
+
+
+//   isTracking = true;
+//   setControlButtonsEnabled(false);  // ⛔ disable unrelated controls
+
+
+//   startAutoBackup();
+
+//   if (navigator.geolocation) {
+//     watchId = navigator.geolocation.watchPosition(
+//       position => {
+//         const { latitude, longitude, accuracy } = position.coords;
+//         if (accuracy > 25) return;
+
+//         const latLng = { lat: latitude, lng: longitude };
+
+//         if (lastCoords) {
+//           const dist = haversineDistance(lastCoords, latLng);
+//           if (dist > 0.2) return; // skip GPS jumps
+//           totalDistance += dist;
+//         }
+
+//         lastCoords = latLng;
+//         path.push(latLng);
+//         marker.setLatLng(latLng);
+//         map.panTo(latLng);
+
+//         // Draw new polyline for the path
+//         if (path.length > 1) {
+//           const segment = [path[path.length - 2], path[path.length - 1]];
+//           L.polyline(segment, { color: 'green' }).addTo(map);
+//         }
+
+//         routeData.push({
+//           type: "location",
+//           timestamp: Date.now(),
+//           coords: latLng
+//         });
+
+//         document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
+//         //document.getElementById("liveDistance").textContent = totalDistance.toFixed(2) + " km";
+//       },
+//       err => console.error("GPS error:", err),
+//       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+//     );
+
+//     //startTimer();
+//     startTime = Date.now() - elapsedTime;
+// clearInterval(timerInterval);
+// updateTimerDisplay();
+// timerInterval = setInterval(updateTimerDisplay, 1000);
+
+//   } else {
+//     alert("Geolocation not supported");
+//   }
+// };
+
 window.startTracking = function () {
   openAccessibilityForm();
 
@@ -259,61 +323,72 @@ window.startTracking = function () {
   document.getElementById("resetBtn").disabled = true;
   document.getElementById("takePhotoBtn").disabled = false;
 
-
   isTracking = true;
-  setControlButtonsEnabled(false);  // ⛔ disable unrelated controls
-
-
+  setControlButtonsEnabled(false);
   startAutoBackup();
 
-  if (navigator.geolocation) {
-    watchId = navigator.geolocation.watchPosition(
-      position => {
-        const { latitude, longitude, accuracy } = position.coords;
-        if (accuracy > 25) return;
-
-        const latLng = { lat: latitude, lng: longitude };
-
-        if (lastCoords) {
-          const dist = haversineDistance(lastCoords, latLng);
-          if (dist > 0.2) return; // skip GPS jumps
-          totalDistance += dist;
-        }
-
-        lastCoords = latLng;
-        path.push(latLng);
-        marker.setLatLng(latLng);
-        map.panTo(latLng);
-
-        // Draw new polyline for the path
-        if (path.length > 1) {
-          const segment = [path[path.length - 2], path[path.length - 1]];
-          L.polyline(segment, { color: 'green' }).addTo(map);
-        }
-
-        routeData.push({
-          type: "location",
-          timestamp: Date.now(),
-          coords: latLng
-        });
-
-        document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
-        //document.getElementById("liveDistance").textContent = totalDistance.toFixed(2) + " km";
-      },
-      err => console.error("GPS error:", err),
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
-    );
-
-    //startTimer();
-    startTime = Date.now() - elapsedTime;
-clearInterval(timerInterval);
-updateTimerDisplay();
-timerInterval = setInterval(updateTimerDisplay, 1000);
-
-  } else {
+  if (!navigator.geolocation) {
     alert("Geolocation not supported");
+    return;
   }
+
+  // Tracking logic
+  watchId = navigator.geolocation.watchPosition(
+    positionHandler,
+    err => console.error("GPS error:", err),
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 5000
+    }
+  );
+
+  startTime = Date.now() - elapsedTime;
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval = setInterval(updateTimerDisplay, 1000);
 };
+
+// Extracted position handler
+function positionHandler(position) {
+  const { latitude, longitude, accuracy } = position.coords;
+  if (accuracy > 50) return; // Less accurate fix
+
+  const latLng = { lat: latitude, lng: longitude };
+
+  if (lastCoords) {
+    const dist = haversineDistance(lastCoords, latLng);
+
+    if (dist > 1) return;        // Skip large jumps
+    if (dist < 0.005) return;    // Skip jitter (<5 meters)
+
+    // Optional: filter stationary jitter
+    if (dist < 0.003 && Date.now() - lastTimestamp < 5000) return;
+
+    totalDistance += dist;
+  }
+
+  lastCoords = latLng;
+  lastTimestamp = Date.now();
+
+  path.push(latLng);
+  marker.setLatLng(latLng);
+  map.panTo(latLng, { animate: true });
+
+  if (path.length > 1) {
+    const segment = [path[path.length - 2], path[path.length - 1]];
+    L.polyline(segment, { color: 'green', weight: 4 }).addTo(map);
+  }
+
+  routeData.push({
+    type: "location",
+    timestamp: Date.now(),
+    coords: latLng
+  });
+
+  document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
+}
+
 
 window.stopTracking = function () {
   
