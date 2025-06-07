@@ -298,7 +298,7 @@ window.startTracking = function () {
         });
 
         document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
-        document.getElementById("liveDistance").textContent = totalDistance.toFixed(2) + " km";
+        //document.getElementById("liveDistance").textContent = totalDistance.toFixed(2) + " km";
       },
       err => console.error("GPS error:", err),
       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
@@ -462,7 +462,7 @@ Total Time: ${document.getElementById("timer").textContent}`);
 // === TRACKING ===
 window.togglePause = function () {
   isPaused = !isPaused;
-  document.getElementById("pauseButtonLabel").textContent = isPaused ? "Resume" : "Pause";
+  //document.getElementById("pauseButtonLabel").textContent = isPaused ? "Resume" : "Pause";
   if (!isPaused) {
     startTime = Date.now() - elapsedTime;
     timerInterval = setInterval(updateTimerDisplay, 1000);
