@@ -50,9 +50,6 @@ function setControlButtonsEnabled(enabled) {
 //   }
 // });
 
-let rotationEnabled = false;
-let lastHeading = 0;
-
 const toggleRotationButton = document.getElementById("rotationToggle");
 toggleRotationButton.addEventListener("click", () => {
   rotationEnabled = !rotationEnabled;
