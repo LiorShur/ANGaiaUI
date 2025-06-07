@@ -36,6 +36,12 @@ html, body {
   transform-origin: center center;
   z-index: 1;
 }
+#mapWrapper {
+  border: 2px solid red;
+}
+#map {
+  border: 2px solid blue;
+}
 
 #mapContainer{
   position: absolute;
