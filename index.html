@@ -21,14 +21,22 @@
       overflow: hidden;
     }
 
-    #map {
- position: absolute;
-  top: 0;
-  left: 0;
+    #mapWrapper {
+  position: absolute;
+  width: 150vw;  /* Over-provision for rotation */
+  height: 150vh;
+  top: -25vh;
+  left: -25vw;
+  transform-origin: center center;
+  pointer-events: none; /* lets inner map handle interaction */
+  z-index: 0;
+}
+
+#map {
   width: 100vw;
   height: 100vh;
   transform-origin: center center;
-  transition: transform 0.3s ease-out;
+  pointer-events: auto;
 }
     #mapContainer {
   position: absolute;
