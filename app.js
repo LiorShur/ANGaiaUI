@@ -79,6 +79,9 @@ function setControlButtonsEnabled(enabled) {
 document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
 
 function handleOrientation(event) {
+  const now = Date.now();
+  if (now - lastUpdate < 100) return; // 100ms throttle
+  lastUpdate = now;
   if (!rotationEnabled) return;
   if (map.getZoom() > 12) {
   map.setZoom(map.getZoom() - 1); // Adjust based on your preferred level
@@ -91,8 +94,11 @@ function handleOrientation(event) {
   const mapEl = document.getElementById("map");
 
   // Apply same transform to both elements
-  wrapper.style.transform = `rotate(${rotateDeg}deg) scale(2)`;
-  mapEl.style.transform = `rotate(${rotateDeg}deg) scale(2)`;
+  wrapper.style.transform = `rotate(${rotateDeg}deg)`;
+mapEl.style.transform = `rotate(${-rotateDeg}deg)`;  // counter rotation for content
+
+// Optional: Set map zoom for better coverage
+if (map.getZoom() > 13) map.setZoom(map.getZoom() - 1);
 }
 
 function toggleRotation() {
@@ -104,8 +110,11 @@ function toggleRotation() {
   if (rotationEnabled) {
     window.addEventListener("deviceorientation", handleOrientation, true);
   } else {
-    wrapper.style.transform = "rotate(0deg) scale(2)";
-    mapEl.style.transform = "rotate(0deg) scale(2)";
+    wrapper.style.transform = `rotate(${rotateDeg}deg)`;
+mapEl.style.transform = `rotate(${-rotateDeg}deg)`;  // counter rotation for content
+
+// Optional: Set map zoom for better coverage
+if (map.getZoom() > 13) map.setZoom(map.getZoom() - 1);
     currentRotation = 0;
     window.removeEventListener("deviceorientation", handleOrientation, false);
   }
