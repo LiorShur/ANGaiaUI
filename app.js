@@ -94,14 +94,10 @@ function toggleRotation() {
   rotationEnabled = !rotationEnabled;
 
   if (rotationEnabled) {
-    if (!headingListenerAttached && window.DeviceOrientationEvent) {
-      window.addEventListener("deviceorientation", handleOrientation, true);
-      headingListenerAttached = true;
-    }
+    window.addEventListener("deviceorientation", handleOrientation, true);
   } else {
     wrapper.style.transform = "rotate(0deg) scale(1)";
     window.removeEventListener("deviceorientation", handleOrientation, true);
-    headingListenerAttached = false;
   }
 
   map.invalidateSize();
