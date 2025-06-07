@@ -31,14 +31,14 @@ body, html {
 
 #mapWrapper {
   position: relative;
-  width: 150%;
-  height: 150%;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
 #map {
-  width: 150vw; /* make it wider to cover rotated corners */
-  height: 150vh;
+  width: 100vw; /* make it wider to cover rotated corners */
+  height: 100vh;
   position: absolute;
 /*   top: -25vh;
   left: -25vw; */
