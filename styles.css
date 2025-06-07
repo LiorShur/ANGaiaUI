@@ -560,9 +560,6 @@ width: 40px;
   .button-row button {
     flex: 1 1 100%;
   }
-  #map {
-    height: 50vh;
-  }
 }
 /* Optional: if really super narrow screen, allow scroll */
 @media (max-width: 320px) {
