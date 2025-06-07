@@ -15,6 +15,8 @@ let rotationEnabled = false;
 let currentHeading = 0;
 let lastHeading = 0;
 let headingListenerAttached = false;
+let rotateDeg = 0;
+let headingUpdateTime = 0;
 
 
 function setControlButtonsEnabled(enabled) {
@@ -79,48 +81,47 @@ function setControlButtonsEnabled(enabled) {
 document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
 
 function handleOrientation(event) {
+  if (!rotationEnabled || !map) return;
+
+  const heading = event.alpha;
   const now = Date.now();
-  if (now - lastUpdate < 100) return; // 100ms throttle
-  lastUpdate = now;
-  if (!rotationEnabled) return;
-  if (map.getZoom() > 12) {
-  map.setZoom(map.getZoom() - 1); // Adjust based on your preferred level
+
+  if (heading != null && now - headingUpdateTime > 100) {
+    rotateDeg = 360 - heading;
+    const mapEl = document.getElementById("map");
+    const wrapper = document.getElementById("mapWrapper");
+
+    wrapper.style.transform = `rotate(${rotateDeg}deg)`;
+    mapEl.style.transform = `rotate(${-rotateDeg}deg)`;
+
+    headingUpdateTime = now;
   }
-  const rotateDeg = 360 - event.alpha;
-  currentRotation = rotateDeg;
-  updateCompass(rotateDeg);
-
-  const wrapper = document.getElementById("mapWrapper");
-  const mapEl = document.getElementById("map");
-
-  // Apply same transform to both elements
-  wrapper.style.transform = `rotate(${rotateDeg}deg)`;
-mapEl.style.transform = `rotate(${-rotateDeg}deg)`;  // counter rotation for content
-
-// Optional: Set map zoom for better coverage
-if (map.getZoom() > 13) map.setZoom(map.getZoom() - 1);
 }
+
 
 function toggleRotation() {
+  rotationEnabled = !rotationEnabled;
+
   const wrapper = document.getElementById("mapWrapper");
   const mapEl = document.getElementById("map");
 
-  rotationEnabled = !rotationEnabled;
-
   if (rotationEnabled) {
-    window.addEventListener("deviceorientation", handleOrientation, true);
+    if (!orientationListenerActive) {
+      window.addEventListener("deviceorientationabsolute", handleOrientation);
+      window.addEventListener("deviceorientation", handleOrientation);
+      orientationListenerActive = true;
+    }
+
+    wrapper.style.transformOrigin = "center center";
+    mapEl.style.transformOrigin = "center center";
+    map.setZoom(map.getZoom() - 1); // zoom out slightly
   } else {
-    wrapper.style.transform = `rotate(${rotateDeg}deg)`;
-mapEl.style.transform = `rotate(${-rotateDeg}deg)`;  // counter rotation for content
-
-// Optional: Set map zoom for better coverage
-if (map.getZoom() > 13) map.setZoom(map.getZoom() - 1);
-    currentRotation = 0;
-    window.removeEventListener("deviceorientation", handleOrientation, false);
+    wrapper.style.transform = "rotate(0deg)";
+    mapEl.style.transform = "rotate(0deg)";
+    map.setZoom(map.getZoom() + 1); // reset zoom
   }
-
-  map.invalidateSize();
 }
+
 
 function updateCompass(angle) {
   document.getElementById("compassIcon").style.transform = `rotate(${angle}deg)`;
@@ -535,6 +536,12 @@ window.startTracking = function () {
   setControlButtonsEnabled(false);
   startAutoBackup();
 
+  if (rotationEnabled && !orientationListenerActive) {
+  window.addEventListener("deviceorientationabsolute", handleOrientation);
+  window.addEventListener("deviceorientation", handleOrientation);
+  orientationListenerActive = true;
+}
+
   if (navigator.geolocation) {
     watchId = navigator.geolocation.watchPosition(
       position => {
@@ -780,6 +787,12 @@ function resumeTracking() {
   clearInterval(timerInterval);
   startTime = Date.now() - elapsedTime;
   timerInterval = setInterval(updateTimerDisplay, 1000);
+
+  if (rotationEnabled && !orientationListenerActive) {
+  window.addEventListener("deviceorientationabsolute", handleOrientation);
+  window.addEventListener("deviceorientation", handleOrientation);
+  orientationListenerActive = true;
+}
 
   // Resume location tracking
   if (navigator.geolocation) {
