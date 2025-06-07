@@ -37,12 +37,12 @@ body, html {
 }
 
 #map {
-  width: 100vw;
-  height: 100vh;
-  position: absolute;
+ position: absolute;
   top: 0;
   left: 0;
-/*   transform-origin: center center; */
+  width: 100vw;
+  height: 100vh;
+  transform-origin: center center;
   transition: transform 0.3s ease-out;
 }
 
