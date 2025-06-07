@@ -31,8 +31,8 @@ body, html {
 
 #mapWrapper {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -40,8 +40,8 @@ body, html {
   width: 150vw; /* make it wider to cover rotated corners */
   height: 150vh;
   position: absolute;
-  top: -25vh;
-  left: -25vw;
+/*   top: -25vh;
+  left: -25vw; */
   transform-origin: center center;
   transition: transform 0.3s ease;
 }
