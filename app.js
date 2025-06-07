@@ -86,7 +86,7 @@ function handleOrientation(event) {
 
   const rotateDeg = 360 - heading;
   const wrapper = document.getElementById("mapWrapper");
-  wrapper.style.transform = `rotate(${rotateDeg}deg) scale(1.1)`;
+  wrapper.style.transform = `rotate(${rotateDeg}deg) scale(1.8)`;
 }
 
 function toggleRotation() {
