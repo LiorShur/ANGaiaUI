@@ -166,6 +166,17 @@ function initMap(callback) {
   if (callback) callback();
 }
 
+let currentBearing = 0;
+
+function rotateMapTo(bearing) {
+  currentBearing = bearing;
+  document.getElementById("map").style.transform = `rotate(${-bearing}deg)`;
+  document.querySelectorAll(".leaflet-marker-icon, .leaflet-popup").forEach(el => {
+    el.style.transform = `rotate(${bearing}deg)`; // Unrotate icons/popups
+  });
+}
+
+
 function togglePanel(id) {
   const panels = ['exportPanel', 'summaryPanel', 'devToolsPanel'];
 
