@@ -17,7 +17,7 @@ let lastHeading = 0;
 let headingListenerAttached = false;
 let rotateDeg = 0;
 let headingUpdateTime = 0;
-
+let orientationListenerActive = false;
 
 function setControlButtonsEnabled(enabled) {
   const idsToDisable = [
