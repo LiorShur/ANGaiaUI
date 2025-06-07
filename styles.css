@@ -2,15 +2,6 @@
   box-sizing: border-box;
 }
 
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: sans-serif;
-  overflow: hidden;
-}
-
-
 #header {
   background: linear-gradient(135deg, #4caf50, #81c784);
   color: #fff;
@@ -20,13 +11,12 @@ body, html {
 /*   font-weight: bold; */
 }
 
-#mapContainer{
-  position: absolute;
-  top: 0; left: 0;
+html, body {
+  margin: 0;
+  padding: 0;
   width: 100vw;
   height: 100vh;
-  background: #e0e0e0;
-  z-index: 0;
+  overflow: hidden;
 }
 
 #mapWrapper {
@@ -35,8 +25,8 @@ body, html {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 0;
   transform-origin: center center;
+  z-index: 0;
   transition: transform 0.2s ease;
 }
 
@@ -45,6 +35,15 @@ body, html {
   height: 100%;
   transform-origin: center center;
   z-index: 1;
+}
+
+#mapContainer{
+  position: absolute;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #e0e0e0;
+  z-index: 0;
 }
 
 #compass {
@@ -67,16 +66,87 @@ body, html {
   border-bottom: 1px solid #ccc;
 }
 
-/* .button-row {
+    .top-bar, .bottom-bar, .media-panel, .floating-left, .floating-right {
+      position: absolute;
+      z-index: 1000;
+    }
+    .top-bar {
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      padding: 2px 2px;
+      border-radius: 10px;
+      color: white;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .bottom-banner {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  /* background: rgb(0, 0, 0); */
+  background: transparent;
+  /* box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.2); */
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
+  justify-content: space-around;
+  z-index: 9998;
+  padding: 10px 5px;
 }
- */
+
+.bottom-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 5px;
+}
+
+.bottom-panel button {
+  margin: 4px 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+}
+
+    .floating-left {
+      bottom: 80px;
+      left: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .floating-right {
+      bottom: 80px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+   
+    .round-button {
+  width: 50px;
+  height: 50px;
+  background-color: black; /* or green etc. */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  transition: background 0.3s;
+}
+
+.round-button:hover {
+  background-color: #333;
+}
 
  .bottom-nav {
   position: fixed;
