@@ -14,6 +14,7 @@ let isTracking = false;
 let rotationEnabled = false;
 let currentHeading = 0;
 let lastHeading = 0;
+let headingListenerAttached = false;
 
 
 function setControlButtonsEnabled(enabled) {
@@ -50,30 +51,47 @@ function setControlButtonsEnabled(enabled) {
 //   }
 // });
 
-const toggleRotationButton = document.getElementById("rotationToggle");
-toggleRotationButton.addEventListener("click", () => {
+// const toggleRotationButton = document.getElementById("rotationToggle");
+// toggleRotationButton.addEventListener("click", () => {
+//   rotationEnabled = !rotationEnabled;
+
+//   if (!rotationEnabled) {
+//     // 💡 Stop device orientation updates
+//     window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
+//     window.removeEventListener("deviceorientation", handleOrientation, true);
+
+//     // 💡 Reset rotation CSS
+//     const container = document.getElementById("map");
+//     container.style.transform = "rotate(0deg)";
+//     container.style.transition = "transform 0.3s ease-out";
+
+//     // Optionally reset map bearing visually
+//     map.setBearing?.(0); // if using a plugin that supports setBearing
+//   } else {
+//     // 💡 Start listening again
+//     if (window.DeviceOrientationEvent) {
+//       window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+//       window.addEventListener("deviceorientation", handleOrientation, true);
+//     }
+//   }
+// });
+
+function toggleRotation() {
   rotationEnabled = !rotationEnabled;
+  const mapEl = document.getElementById("map");
 
-  if (!rotationEnabled) {
-    // 💡 Stop device orientation updates
-    window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
-    window.removeEventListener("deviceorientation", handleOrientation, true);
-
-    // 💡 Reset rotation CSS
-    const container = document.getElementById("map");
-    container.style.transform = "rotate(0deg)";
-    container.style.transition = "transform 0.3s ease-out";
-
-    // Optionally reset map bearing visually
-    map.setBearing?.(0); // if using a plugin that supports setBearing
-  } else {
-    // 💡 Start listening again
-    if (window.DeviceOrientationEvent) {
-      window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+  if (rotationEnabled) {
+    if (!headingListenerAttached && window.DeviceOrientationEvent) {
       window.addEventListener("deviceorientation", handleOrientation, true);
+      headingListenerAttached = true;
     }
+  } else {
+    mapEl.style.transform = "rotate(0deg) scale(1)";
+    window.removeEventListener("deviceorientation", handleOrientation, true);
+    headingListenerAttached = false;
   }
-});
+}
+
 
 window.addEventListener("deviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation", e => {
   if (e.absolute || e.webkitCompassHeading !== undefined) {
@@ -340,18 +358,30 @@ function rotateMap(deg) {
   mapEl.style.transform = `rotate(${-deg}deg)`; // negative to match heading
 }
 
+// function handleOrientation(event) {
+//   if (!rotationEnabled) return;
+
+//   const heading = event.alpha ?? 0;
+//   const rotation = 360 - heading;
+
+//   const container = document.getElementById("map");
+//   container.style.transform = `rotate(${rotation}deg) scale(1.50)`; // slight scale to fill edges
+//   container.style.transition = "transform 0.3s ease-out";
+
+//   lastHeading = heading;
+// }
+
 function handleOrientation(event) {
   if (!rotationEnabled) return;
-
   const heading = event.alpha ?? 0;
-  const rotation = 360 - heading;
-
-  const container = document.getElementById("map");
-  container.style.transform = `rotate(${rotation}deg) scale(1.50)`; // slight scale to fill edges
-  container.style.transition = "transform 0.3s ease-out";
-
   lastHeading = heading;
+
+  const mapEl = document.getElementById("map");
+  const rotateDeg = 360 - heading;
+
+  mapEl.style.transform = `rotate(${rotateDeg}deg) scale(1.05)`;
 }
+
 
 
 function getBearing(start, end) {
@@ -507,7 +537,10 @@ window.startTracking = function () {
         lastCoords = latLng;
         path.push(latLng);
         marker.setLatLng(latLng);
-        map.panTo(latLng, { animate: true });
+        // map.panTo(latLng, { animate: true });
+        if (!rotationEnabled) {
+  map.panTo(latLng, { animate: true });
+}
 
         if (path.length > 1) {
           const segment = [path[path.length - 2], path[path.length - 1]];
@@ -576,7 +609,10 @@ function positionHandler(position) {
 
     map.setBearing?.(heading); // Optional if using a plugin
   } else {
-    map.panTo(latLng, { animate: true });
+    if (!rotationEnabled) {
+   map.panTo(latLng, { animate: true });
+}
+   
   }
 
   if (lastCoords) {
@@ -596,6 +632,7 @@ function positionHandler(position) {
 
   path.push(latLng);
   marker.setLatLng(latLng);
+  
   map.panTo(latLng, { animate: true });
 
   if (path.length > 1) {
@@ -736,7 +773,9 @@ function resumeTracking() {
         lastCoords = latLng;
         path.push(latLng);
         marker.setLatLng(latLng);
-        map.panTo(latLng);
+        if (!rotationEnabled) {
+  map.panTo(latLng, { animate: true });
+}
         L.polyline(path, { color: 'green' }).addTo(map);
 
         routeData.push({ type: "location", timestamp: Date.now(), coords: latLng });
