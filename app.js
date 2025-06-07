@@ -381,7 +381,7 @@ function handleOrientation(event) {
   const mapEl = document.getElementById("map");
   const rotateDeg = 360 - heading;
 
-  mapEl.style.transform = `rotate(${rotateDeg}deg) scale(1.05)`;
+  mapEl.style.transform = `rotate(${rotateDeg}deg) scale(1.5)`;
 }
 
 
