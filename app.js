@@ -83,10 +83,9 @@ function handleOrientation(event) {
   if (map.getZoom() > 12) {
   map.setZoom(map.getZoom() - 1); // Adjust based on your preferred level
   }
-  updateCompass(rotateDeg);
-
   const rotateDeg = 360 - event.alpha;
   currentRotation = rotateDeg;
+  updateCompass(rotateDeg);
 
   const wrapper = document.getElementById("mapWrapper");
   const mapEl = document.getElementById("map");
