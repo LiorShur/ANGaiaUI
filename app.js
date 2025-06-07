@@ -510,12 +510,12 @@ window.startTracking = function () {
   }
 };
 
-let followHeading = false;
+// let followHeading = false;
 
-document.getElementById("compassToggle").addEventListener("click", () => {
-  followHeading = !followHeading;
-  document.getElementById("compassToggle").textContent = followHeading ? "🧭⇨" : "🧭";
-});
+// document.getElementById("compassToggle").addEventListener("click", () => {
+//   followHeading = !followHeading;
+//   document.getElementById("compassToggle").textContent = followHeading ? "🧭⇨" : "🧭";
+// });
 
 // Extracted position handler
 function positionHandler(position) {
