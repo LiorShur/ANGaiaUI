@@ -130,6 +130,8 @@ function initMap(callback) {
   L.Control.geocoder({
   defaultMarkGeocode: true
 }).addTo(map);
+  L.Control.geocoder({ position: 'topleft' }).addTo(map);
+
 
   // Add OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
