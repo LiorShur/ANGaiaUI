@@ -78,9 +78,21 @@ function setControlButtonsEnabled(enabled) {
 
 document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
 
+function handleOrientation(event) {
+  if (!rotationEnabled) return;
+  const heading = event.alpha ?? 0;
+  lastHeading = heading;
+
+  const wrapper = document.getElementById("mapWrapper");
+  const rotateDeg = 360 - heading;
+
+  wrapper.style.transform = `rotate(${rotateDeg}deg) scale(1.2)`;
+}
+
 function toggleRotation() {
   rotationEnabled = !rotationEnabled;
-  const mapEl = document.getElementById("map");
+
+  const wrapper = document.getElementById("mapWrapper");
 
   if (rotationEnabled) {
     if (!headingListenerAttached && window.DeviceOrientationEvent) {
@@ -88,9 +100,10 @@ function toggleRotation() {
       headingListenerAttached = true;
     }
   } else {
-    mapEl.style.transform = "rotate(0deg) scale(1)";
+    wrapper.style.transform = "rotate(0deg) scale(1)";
     window.removeEventListener("deviceorientation", handleOrientation, true);
     headingListenerAttached = false;
+    map.invalidateSize(); // Recalculate layout
   }
 }
 
@@ -372,19 +385,6 @@ function rotateMap(deg) {
 
 //   lastHeading = heading;
 // }
-
-function handleOrientation(event) {
-  if (!rotationEnabled) return;
-  const heading = event.alpha ?? 0;
-  lastHeading = heading;
-
-  const mapEl = document.getElementById("map");
-  const rotateDeg = 360 - heading;
-
-  mapEl.style.transform = `rotate(${rotateDeg}deg) scale(1.5)`;
-}
-
-
 
 function getBearing(start, end) {
   const dLon = (end.lng - start.lng) * Math.PI / 180;
