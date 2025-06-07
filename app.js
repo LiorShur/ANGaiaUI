@@ -343,6 +343,20 @@ function rotateMap(deg) {
   mapEl.style.transform = `rotate(${-deg}deg)`; // negative to match heading
 }
 
+function handleOrientation(event) {
+  if (!rotationEnabled) return;
+
+  const heading = event.alpha ?? 0;
+  const rotation = 360 - heading;
+
+  const container = document.getElementById("map");
+  container.style.transform = `rotate(${rotation}deg) scale(1.05)`; // slight scale to fill edges
+  container.style.transition = "transform 0.3s ease-out";
+
+  lastHeading = heading;
+}
+
+
 function getBearing(start, end) {
   const dLon = (end.lng - start.lng) * Math.PI / 180;
   const lat1 = start.lat * Math.PI / 180;
