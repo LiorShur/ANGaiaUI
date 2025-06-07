@@ -127,10 +127,10 @@ function initMap(callback) {
 //   // Now safely initialize a new map
   map = L.map('map').setView([0, 0], 15);
 
-  L.Control.geocoder({
-  defaultMarkGeocode: true
-}).addTo(map);
-  L.Control.geocoder({ position: 'topleft' }).addTo(map);
+//   L.Control.geocoder({
+//   defaultMarkGeocode: true
+// }).addTo(map);
+//   L.Control.geocoder({ position: 'topleft' }).addTo(map);
 
 
   // Add OpenStreetMap tiles
