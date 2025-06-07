@@ -355,12 +355,34 @@ window.startTracking = function () {
   timerInterval = setInterval(updateTimerDisplay, 1000);
 };
 
+let followHeading = false;
+
+document.getElementById("compassToggle").addEventListener("click", () => {
+  followHeading = !followHeading;
+  document.getElementById("compassToggle").textContent = followHeading ? "🧭⇨" : "🧭";
+});
+
 // Extracted position handler
 function positionHandler(position) {
   const { latitude, longitude, accuracy } = position.coords;
   if (accuracy > 50) return; // Less accurate fix
 
   const latLng = { lat: latitude, lng: longitude };
+
+  marker.setLatLng(latLng);
+
+  if (followHeading && typeof heading === "number" && !isNaN(heading)) {
+    map.setView(latLng, map.getZoom(), {
+      animate: true,
+      pan: {
+        duration: 0.5
+      }
+    });
+
+    map.setBearing?.(heading); // Optional if using a plugin
+  } else {
+    map.panTo(latLng, { animate: true });
+  }
 
   if (lastCoords) {
     const dist = haversineDistance(lastCoords, latLng);
