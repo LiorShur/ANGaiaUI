@@ -88,6 +88,7 @@ function smoothHeading(current, previous) {
 }
 
 function handleOrientation(event) {
+  const alpha = event.alpha;
   if (!rotationEnabled || !map) return;
 
   const heading = event.alpha;
