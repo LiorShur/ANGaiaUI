@@ -91,7 +91,7 @@ function handleOrientation(event) {
     const mapEl = document.getElementById("map");
     const wrapper = document.getElementById("mapWrapper");
 
-    wrapper.style.transform = `rotate(${rotateDeg}deg)`;
+    wrapper.style.transform = `rotate(${rotateDeg}deg) scale(1.5)`;
     mapEl.style.transform = `rotate(${-rotateDeg}deg)`;
 
     headingUpdateTime = now;
@@ -112,8 +112,8 @@ function toggleRotation() {
       orientationListenerActive = true;
     }
 
-    wrapper.style.transformOrigin = "center center";
-    mapEl.style.transformOrigin = "center center";
+    // wrapper.style.transformOrigin = "center center";
+    // mapEl.style.transformOrigin = "center center";
     map.setZoom(map.getZoom() - 1); // zoom out slightly
   } else {
     wrapper.style.transform = "rotate(0deg)";
@@ -536,10 +536,12 @@ window.startTracking = function () {
   setControlButtonsEnabled(false);
   startAutoBackup();
 
-  if (rotationEnabled && !orientationListenerActive) {
+  if (rotationEnabled && orientationListenerActive) {
   window.addEventListener("deviceorientationabsolute", handleOrientation);
   window.addEventListener("deviceorientation", handleOrientation);
   orientationListenerActive = true;
+} else {
+  mapWrapper.style.transform = `none`;
 }
 
   if (navigator.geolocation) {
@@ -788,10 +790,12 @@ function resumeTracking() {
   startTime = Date.now() - elapsedTime;
   timerInterval = setInterval(updateTimerDisplay, 1000);
 
-  if (rotationEnabled && !orientationListenerActive) {
+  if (rotationEnabled && orientationListenerActive) {
   window.addEventListener("deviceorientationabsolute", handleOrientation);
   window.addEventListener("deviceorientation", handleOrientation);
   orientationListenerActive = true;
+} else {
+  mapWrapper.style.transform = `none`;
 }
 
   // Resume location tracking
