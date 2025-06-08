@@ -13,11 +13,17 @@ let audioChunks = [];
 let isTracking = false;
 let rotationEnabled = false;
 let currentHeading = 0;
-let lastHeading = 0;
+let lastHeading = null;
 let headingListenerAttached = false;
 let rotateDeg = 0;
 let headingUpdateTime = 0;
 let orientationListenerActive = false;
+let lastUpdate = 0;
+
+const mapEl = document.getElementById("map");
+const wrapperEl = document.getElementById("mapWrapper") || mapEl.parentNode;
+mapEl.style.transition = "transform 0.3s ease";
+wrapperEl.style.overflow = "hidden";
 
 function setControlButtonsEnabled(enabled) {
   const idsToDisable = [
@@ -87,66 +93,39 @@ function smoothHeading(current, previous) {
   return previous + delta * 0.1; // adjust 0.1 for smoothness
 }
 
+window.toggleRotation = function () {
+  if (orientationListenerActive) {
+    window.removeEventListener("deviceorientationabsolute", handleOrientation);
+    orientationListenerActive = false;
+    mapEl.style.transform = "rotate(0deg) scale(1)";
+    wrapperEl.style.transform = "rotate(0deg)";
+  } else {
+    window.addEventListener("deviceorientationabsolute", handleOrientation);
+    orientationListenerActive = true;
+  }
+};
+
+// 🧭 Orientation Handler
 function handleOrientation(event) {
-  const alpha = event.alpha;
-  if (!rotationEnabled || !map) return;
+  if (!orientationListenerActive || !event.alpha) return;
+
+  const now = Date.now();
+  if (now - lastUpdate < 100) return; // 10 fps throttle
+  lastUpdate = now;
 
   const heading = event.alpha;
-  const now = Date.now();
+  const delta = Math.abs(heading - (lastHeading ?? heading));
+  if (delta > 90) return; // skip sudden 180° flips
 
-  if (heading != null && now - headingUpdateTime > 100) {
-    //rotateDeg = 360 - heading;
-    rotateDeg = smoothHeading(alpha, rotateDeg);
-    const mapEl = document.getElementById("map");
-    const wrapper = document.getElementById("mapWrapper");
+  lastHeading = heading;
+  rotateDeg = 360 - heading;
+  wrapperEl.style.transform = `rotate(${rotateDeg}deg)`;
+  mapEl.style.transform = `rotate(${rotateDeg}deg) scale(1.8)`;
 
-    wrapper.style.transform = `rotate(${rotateDeg}deg) scale(1.5)`;
-    mapEl.style.transform = `rotate(${-rotateDeg}deg)`;
-
-    headingUpdateTime = now;
-  }
+  // Compass Arrow (optional)
+  const compass = document.getElementById("compassArrow");
+  if (compass) compass.style.transform = `rotate(${heading}deg)`;
 }
-
-
-// function toggleRotation() {
-//   rotationEnabled = !rotationEnabled;
-
-//   const wrapper = document.getElementById("mapWrapper");
-//   const mapEl = document.getElementById("map");
-
-//   if (rotationEnabled) {
-//     if (!orientationListenerActive) {
-//       window.addEventListener("deviceorientationabsolute", handleOrientation);
-//       window.addEventListener("deviceorientation", handleOrientation);
-//       orientationListenerActive = true;
-//     }
-
-//     // wrapper.style.transformOrigin = "center center";
-//     // mapEl.style.transformOrigin = "center center";
-//     map.setZoom(map.getZoom() - 1); // zoom out slightly
-//   } else {
-//     wrapper.style.transform = "rotate(0deg)";
-//     mapEl.style.transform = "rotate(0deg)";
-//     map.setZoom(map.getZoom() + 1); // reset zoom
-//   }
-// }
-
-function toggleRotation() {
-  rotationEnabled = !rotationEnabled;
-
-  if (rotationEnabled) {
-    if (!orientationListenerActive) {
-      window.addEventListener("deviceorientation", handleOrientation);
-      orientationListenerActive = true;
-    }
-  } else {
-    mapWrapper.style.transform = "none";
-    window.removeEventListener("deviceorientation", handleOrientation);
-    orientationListenerActive = false;
-  }
-}
-
-
 
 function updateCompass(angle) {
   document.getElementById("compassIcon").style.transform = `rotate(${angle}deg)`;
@@ -160,8 +139,6 @@ window.addEventListener("deviceorientationabsolute" in window ? "deviceorientati
     rotateMap(currentHeading);
   }
 });
-
-
 
 function setTrackingButtonsEnabled(enabled) {
   const startBtn = document.getElementById("startBtn");
