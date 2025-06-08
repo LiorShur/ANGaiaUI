@@ -80,6 +80,13 @@ function setControlButtonsEnabled(enabled) {
 
 document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
 
+function smoothHeading(current, previous) {
+  let delta = current - previous;
+  if (delta > 180) delta -= 360;
+  if (delta < -180) delta += 360;
+  return previous + delta * 0.1; // adjust 0.1 for smoothness
+}
+
 function handleOrientation(event) {
   if (!rotationEnabled || !map) return;
 
@@ -87,7 +94,8 @@ function handleOrientation(event) {
   const now = Date.now();
 
   if (heading != null && now - headingUpdateTime > 100) {
-    rotateDeg = 360 - heading;
+    //rotateDeg = 360 - heading;
+    rotateDeg = smoothHeading(alpha, rotateDeg);
     const mapEl = document.getElementById("map");
     const wrapper = document.getElementById("mapWrapper");
 
@@ -99,28 +107,44 @@ function handleOrientation(event) {
 }
 
 
+// function toggleRotation() {
+//   rotationEnabled = !rotationEnabled;
+
+//   const wrapper = document.getElementById("mapWrapper");
+//   const mapEl = document.getElementById("map");
+
+//   if (rotationEnabled) {
+//     if (!orientationListenerActive) {
+//       window.addEventListener("deviceorientationabsolute", handleOrientation);
+//       window.addEventListener("deviceorientation", handleOrientation);
+//       orientationListenerActive = true;
+//     }
+
+//     // wrapper.style.transformOrigin = "center center";
+//     // mapEl.style.transformOrigin = "center center";
+//     map.setZoom(map.getZoom() - 1); // zoom out slightly
+//   } else {
+//     wrapper.style.transform = "rotate(0deg)";
+//     mapEl.style.transform = "rotate(0deg)";
+//     map.setZoom(map.getZoom() + 1); // reset zoom
+//   }
+// }
+
 function toggleRotation() {
   rotationEnabled = !rotationEnabled;
 
-  const wrapper = document.getElementById("mapWrapper");
-  const mapEl = document.getElementById("map");
-
   if (rotationEnabled) {
     if (!orientationListenerActive) {
-      window.addEventListener("deviceorientationabsolute", handleOrientation);
       window.addEventListener("deviceorientation", handleOrientation);
       orientationListenerActive = true;
     }
-
-    // wrapper.style.transformOrigin = "center center";
-    // mapEl.style.transformOrigin = "center center";
-    map.setZoom(map.getZoom() - 1); // zoom out slightly
   } else {
-    wrapper.style.transform = "rotate(0deg)";
-    mapEl.style.transform = "rotate(0deg)";
-    map.setZoom(map.getZoom() + 1); // reset zoom
+    mapWrapper.style.transform = "none";
+    window.removeEventListener("deviceorientation", handleOrientation);
+    orientationListenerActive = false;
   }
 }
+
 
 
 function updateCompass(angle) {
