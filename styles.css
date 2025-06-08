@@ -40,10 +40,10 @@ html, body {
 #mapWrapper {
   border: 2px solid red;
 }
-/* #map {
+#map {
   border: 2px solid blue;
 }
- */
+
 #mapContainer{
   position: absolute;
   top: 0; left: 0;
