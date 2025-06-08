@@ -635,8 +635,8 @@ window.startTracking = function () {
       }
     }, true);
   }
-  if (rotationEnabled) {
-  handleOrientation({ alpha: currentRotation || 0 });
+  // if (rotationEnabled) {
+  // handleOrientation({ alpha: currentRotation || 0 });
 }
 
 };
