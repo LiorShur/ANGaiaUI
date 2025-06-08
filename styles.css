@@ -30,18 +30,20 @@ html, body {
 }
 
 #map {
- width: 100vw;
+ position: absolute;
+  top: 0; left: 0;
+  width: 100vw;
   height: 100vh;
-  transform-origin: center center;
-  transition: transform 0.3s ease;
+  background: #e0e0e0;
+  z-index: 0;
 }
 #mapWrapper {
   border: 2px solid red;
 }
-#map {
+/* #map {
   border: 2px solid blue;
 }
-
+ */
 #mapContainer{
   position: absolute;
   top: 0; left: 0;
