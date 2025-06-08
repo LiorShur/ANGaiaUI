@@ -93,7 +93,7 @@ function smoothHeading(current, previous) {
   return previous + delta * 0.1; // adjust 0.1 for smoothness
 }
 
-window.toggleRotation = function () {
+function toggleRotation() {
   if (orientationListenerActive) {
     window.removeEventListener("deviceorientationabsolute", handleOrientation);
     orientationListenerActive = false;
