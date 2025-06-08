@@ -20,10 +20,10 @@ let headingUpdateTime = 0;
 let orientationListenerActive = false;
 let lastUpdate = 0;
 
-const mapEl = document.getElementById("map");
-const wrapperEl = document.getElementById("mapWrapper") || mapEl.parentNode;
-mapEl.style.transition = "transform 0.3s ease";
-wrapperEl.style.overflow = "hidden";
+// const mapEl = document.getElementById("map");
+// const wrapperEl = document.getElementById("mapWrapper") || mapEl.parentNode;
+// mapEl.style.transition = "transform 0.3s ease";
+// wrapperEl.style.overflow = "hidden";
 
 function setControlButtonsEnabled(enabled) {
   const idsToDisable = [
@@ -84,61 +84,61 @@ function setControlButtonsEnabled(enabled) {
 //   }
 // });
 
-document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
+// document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
 
-function smoothHeading(current, previous) {
-  let delta = current - previous;
-  if (delta > 180) delta -= 360;
-  if (delta < -180) delta += 360;
-  return previous + delta * 0.1; // adjust 0.1 for smoothness
-}
+// function smoothHeading(current, previous) {
+//   let delta = current - previous;
+//   if (delta > 180) delta -= 360;
+//   if (delta < -180) delta += 360;
+//   return previous + delta * 0.1; // adjust 0.1 for smoothness
+// }
 
-function toggleRotation() {
-  if (orientationListenerActive) {
-    window.removeEventListener("deviceorientationabsolute", handleOrientation);
-    orientationListenerActive = false;
-    mapEl.style.transform = "rotate(0deg) scale(1)";
-    wrapperEl.style.transform = "rotate(0deg)";
-  } else {
-    window.addEventListener("deviceorientationabsolute", handleOrientation);
-    orientationListenerActive = true;
-  }
-};
+// function toggleRotation() {
+//   if (orientationListenerActive) {
+//     window.removeEventListener("deviceorientationabsolute", handleOrientation);
+//     orientationListenerActive = false;
+//     mapEl.style.transform = "rotate(0deg) scale(1)";
+//     wrapperEl.style.transform = "rotate(0deg)";
+//   } else {
+//     window.addEventListener("deviceorientationabsolute", handleOrientation);
+//     orientationListenerActive = true;
+//   }
+// };
 
-// 🧭 Orientation Handler
-function handleOrientation(event) {
-  if (!orientationListenerActive || !event.alpha) return;
+// // 🧭 Orientation Handler
+// function handleOrientation(event) {
+//   if (!orientationListenerActive || !event.alpha) return;
 
-  const now = Date.now();
-  if (now - lastUpdate < 100) return; // 10 fps throttle
-  lastUpdate = now;
+//   const now = Date.now();
+//   if (now - lastUpdate < 100) return; // 10 fps throttle
+//   lastUpdate = now;
 
-  const heading = event.alpha;
-  const delta = Math.abs(heading - (lastHeading ?? heading));
-  if (delta > 90) return; // skip sudden 180° flips
+//   const heading = event.alpha;
+//   const delta = Math.abs(heading - (lastHeading ?? heading));
+//   if (delta > 90) return; // skip sudden 180° flips
 
-  lastHeading = heading;
-  rotateDeg = 360 - heading;
-  wrapperEl.style.transform = `rotate(${rotateDeg}deg)`;
-  mapEl.style.transform = `rotate(${rotateDeg}deg) scale(1.8)`;
+//   lastHeading = heading;
+//   rotateDeg = 360 - heading;
+//   wrapperEl.style.transform = `rotate(${rotateDeg}deg)`;
+//   mapEl.style.transform = `rotate(${rotateDeg}deg) scale(1.8)`;
 
-  // Compass Arrow (optional)
-  const compass = document.getElementById("compassArrow");
-  if (compass) compass.style.transform = `rotate(${heading}deg)`;
-}
+//   // Compass Arrow (optional)
+//   const compass = document.getElementById("compassArrow");
+//   if (compass) compass.style.transform = `rotate(${heading}deg)`;
+// }
 
-function updateCompass(angle) {
-  document.getElementById("compassIcon").style.transform = `rotate(${angle}deg)`;
-}
+// function updateCompass(angle) {
+//   document.getElementById("compassIcon").style.transform = `rotate(${angle}deg)`;
+// }
 
 
-window.addEventListener("deviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation", e => {
-  if (e.absolute || e.webkitCompassHeading !== undefined) {
-    const heading = e.webkitCompassHeading || 360 - e.alpha;
-    currentHeading = heading;
-    rotateMap(currentHeading);
-  }
-});
+// window.addEventListener("deviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation", e => {
+//   if (e.absolute || e.webkitCompassHeading !== undefined) {
+//     const heading = e.webkitCompassHeading || 360 - e.alpha;
+//     currentHeading = heading;
+//     rotateMap(currentHeading);
+//   }
+// });
 
 function setTrackingButtonsEnabled(enabled) {
   const startBtn = document.getElementById("startBtn");
@@ -150,46 +150,46 @@ function setTrackingButtonsEnabled(enabled) {
   if (stopBtn) stopBtn.disabled = !enabled;
 }
 
-let lastHeadingCoords = null;
+// let lastHeadingCoords = null;
 
-function computeBearing(a, b) {
-  const toRad = x => x * Math.PI / 180;
-  const toDeg = x => x * 180 / Math.PI;
-  const dLon = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
+// function computeBearing(a, b) {
+//   const toRad = x => x * Math.PI / 180;
+//   const toDeg = x => x * 180 / Math.PI;
+//   const dLon = toRad(b.lng - a.lng);
+//   const lat1 = toRad(a.lat);
+//   const lat2 = toRad(b.lat);
 
-  const y = Math.sin(dLon) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) -
-            Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-  return (toDeg(Math.atan2(y, x)) + 360) % 360;
-}
+//   const y = Math.sin(dLon) * Math.cos(lat2);
+//   const x = Math.cos(lat1) * Math.sin(lat2) -
+//             Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+//   return (toDeg(Math.atan2(y, x)) + 360) % 360;
+// }
 
-function rotateMapTo(bearing) {
-  const mapEl = document.getElementById("map");
-  mapEl.style.transform = `rotate(${-bearing}deg)`;
+// function rotateMapTo(bearing) {
+//   const mapEl = document.getElementById("map");
+//   mapEl.style.transform = `rotate(${-bearing}deg)`;
 
-  document.querySelectorAll(".leaflet-marker-icon, .leaflet-popup").forEach(el => {
-    el.style.transform = `rotate(${bearing}deg)`;
-  });
-}
+//   document.querySelectorAll(".leaflet-marker-icon, .leaflet-popup").forEach(el => {
+//     el.style.transform = `rotate(${bearing}deg)`;
+//   });
+// }
 
-function updateCompass(bearing) {
-  const compass = document.getElementById("compass");
-  if (compass) compass.style.transform = `rotate(${bearing}deg)`;
-}
+// function updateCompass(bearing) {
+//   const compass = document.getElementById("compass");
+//   if (compass) compass.style.transform = `rotate(${bearing}deg)`;
+// }
 
-function simulateHeadingFromMovement(newCoords) {
-  if (!lastHeadingCoords) {
-    lastHeadingCoords = newCoords;
-    return;
-  }
+// function simulateHeadingFromMovement(newCoords) {
+//   if (!lastHeadingCoords) {
+//     lastHeadingCoords = newCoords;
+//     return;
+//   }
 
-  const bearing = computeBearing(lastHeadingCoords, newCoords);
-  rotateMapTo(bearing);
-  updateCompass(bearing);
-  lastHeadingCoords = newCoords;
-}
+//   const bearing = computeBearing(lastHeadingCoords, newCoords);
+//   rotateMapTo(bearing);
+//   updateCompass(bearing);
+//   lastHeadingCoords = newCoords;
+// }
 
 
 const noteIcon = L.divIcon({
@@ -387,13 +387,13 @@ function haversineDistance(coord1, coord2) {
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-function rotateMap(deg) {
-  if (!rotationEnabled) return;
-  const mapEl = document.getElementById("map");
-  mapEl.style.transformOrigin = "center center";
-  mapEl.style.transition = "transform 0.3s ease";
-  mapEl.style.transform = `rotate(${-deg}deg)`; // negative to match heading
-}
+// function rotateMap(deg) {
+//   if (!rotationEnabled) return;
+//   const mapEl = document.getElementById("map");
+//   mapEl.style.transformOrigin = "center center";
+//   mapEl.style.transition = "transform 0.3s ease";
+//   mapEl.style.transform = `rotate(${-deg}deg)`; // negative to match heading
+// }
 
 // function handleOrientation(event) {
 //   if (!rotationEnabled) return;
@@ -408,15 +408,15 @@ function rotateMap(deg) {
 //   lastHeading = heading;
 // }
 
-function getBearing(start, end) {
-  const dLon = (end.lng - start.lng) * Math.PI / 180;
-  const lat1 = start.lat * Math.PI / 180;
-  const lat2 = end.lat * Math.PI / 180;
-  const y = Math.sin(dLon) * Math.cos(lat2);
-  const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
-  const brng = Math.atan2(y, x) * 180 / Math.PI;
-  return (brng + 360) % 360;
-}
+// function getBearing(start, end) {
+//   const dLon = (end.lng - start.lng) * Math.PI / 180;
+//   const lat1 = start.lat * Math.PI / 180;
+//   const lat2 = end.lat * Math.PI / 180;
+//   const y = Math.sin(dLon) * Math.cos(lat2);
+//   const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
+//   const brng = Math.atan2(y, x) * 180 / Math.PI;
+//   return (brng + 360) % 360;
+// }
 
 
 // === ROUTE TRACKING ===
@@ -538,13 +538,13 @@ window.startTracking = function () {
   setControlButtonsEnabled(false);
   startAutoBackup();
 
-  if (rotationEnabled && orientationListenerActive) {
-  window.addEventListener("deviceorientationabsolute", handleOrientation);
-  window.addEventListener("deviceorientation", handleOrientation);
-  orientationListenerActive = true;
-} else {
-  mapWrapper.style.transform = `none`;
-}
+//   if (rotationEnabled && orientationListenerActive) {
+//   window.addEventListener("deviceorientationabsolute", handleOrientation);
+//   window.addEventListener("deviceorientation", handleOrientation);
+//   orientationListenerActive = true;
+// } else {
+//   mapWrapper.style.transform = `none`;
+// }
 
   if (navigator.geolocation) {
     watchId = navigator.geolocation.watchPosition(
@@ -561,10 +561,10 @@ window.startTracking = function () {
           totalDistance += dist;
         }
 
-        if (rotationEnabled && !("ondeviceorientationabsolute" in window || "ondeviceorientation" in window)) {
-            const simulatedBearing = getBearing(lastCoords, latLng);
-            rotateMap(simulatedBearing);
-          }
+        // if (rotationEnabled && !("ondeviceorientationabsolute" in window || "ondeviceorientation" in window)) {
+        //     const simulatedBearing = getBearing(lastCoords, latLng);
+        //     rotateMap(simulatedBearing);
+        //   }
 
         lastCoords = latLng;
         path.push(latLng);
@@ -588,7 +588,7 @@ window.startTracking = function () {
         document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
 
         // Simulate heading
-        simulateHeadingFromMovement(latLng);
+        // simulateHeadingFromMovement(latLng);
       },
       err => console.error("GPS error:", err),
       { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
@@ -604,18 +604,18 @@ window.startTracking = function () {
   }
 
   // Listen for real heading if supported
-  if (window.DeviceOrientationEvent) {
-    window.addEventListener("deviceorientationabsolute", e => {
-      if (e.absolute && e.alpha != null) {
-        const heading = 360 - e.alpha;
-        rotateMapTo(heading);
-        updateCompass(heading);
-      }
-    }, true);
-  }
-  if (rotationEnabled) {
-  handleOrientation({ alpha: lastHeading ?? 0 });
-}
+//   if (window.DeviceOrientationEvent) {
+//     window.addEventListener("deviceorientationabsolute", e => {
+//       if (e.absolute && e.alpha != null) {
+//         const heading = 360 - e.alpha;
+//         rotateMapTo(heading);
+//         updateCompass(heading);
+//       }
+//     }, true);
+//   }
+//   if (rotationEnabled) {
+//   handleOrientation({ alpha: lastHeading ?? 0 });
+// }
 
 };
 
@@ -635,21 +635,21 @@ function positionHandler(position) {
 
   marker.setLatLng(latLng);
 
-  if (followHeading && typeof heading === "number" && !isNaN(heading)) {
-    map.setView(latLng, map.getZoom(), {
-      animate: true,
-      pan: {
-        duration: 0.5
-      }
-    });
+//   if (followHeading && typeof heading === "number" && !isNaN(heading)) {
+//     map.setView(latLng, map.getZoom(), {
+//       animate: true,
+//       pan: {
+//         duration: 0.5
+//       }
+//     });
 
-    map.setBearing?.(heading); // Optional if using a plugin
-  } else {
-    if (!rotationEnabled) {
-   map.panTo(latLng, { animate: true });
-}
+//     map.setBearing?.(heading); // Optional if using a plugin
+//   } else {
+//     if (!rotationEnabled) {
+//    map.panTo(latLng, { animate: true });
+// }
    
-  }
+//   }
 
   if (lastCoords) {
     const dist = haversineDistance(lastCoords, latLng);
@@ -792,13 +792,13 @@ function resumeTracking() {
   startTime = Date.now() - elapsedTime;
   timerInterval = setInterval(updateTimerDisplay, 1000);
 
-  if (rotationEnabled && orientationListenerActive) {
-  window.addEventListener("deviceorientationabsolute", handleOrientation);
-  window.addEventListener("deviceorientation", handleOrientation);
-  orientationListenerActive = true;
-} else {
-  mapWrapper.style.transform = `none`;
-}
+//   if (rotationEnabled && orientationListenerActive) {
+//   window.addEventListener("deviceorientationabsolute", handleOrientation);
+//   window.addEventListener("deviceorientation", handleOrientation);
+//   orientationListenerActive = true;
+// } else {
+//   mapWrapper.style.transform = `none`;
+// }
 
   // Resume location tracking
   if (navigator.geolocation) {
