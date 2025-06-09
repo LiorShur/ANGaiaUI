@@ -2989,3 +2989,4 @@ async function generateElevationChartCanvas(route) {
 
   return canvas;
 }
+}
