@@ -11,19 +11,6 @@ let elapsedTime = 0;
 let mediaRecorder;
 let audioChunks = [];
 let isTracking = false;
-let rotationEnabled = false;
-let currentHeading = 0;
-let lastHeading = null;
-let headingListenerAttached = false;
-let rotateDeg = 0;
-let headingUpdateTime = 0;
-let orientationListenerActive = false;
-let lastUpdate = 0;
-
-// const mapEl = document.getElementById("map");
-// const wrapperEl = document.getElementById("mapWrapper") || mapEl.parentNode;
-// mapEl.style.transition = "transform 0.3s ease";
-// wrapperEl.style.overflow = "hidden";
 
 function setControlButtonsEnabled(enabled) {
   const idsToDisable = [
@@ -51,94 +38,6 @@ function setControlButtonsEnabled(enabled) {
     }
   });
 }
-// document.getElementById("toggleRotationBtn").addEventListener("click", () => {
-//   rotationEnabled = !rotationEnabled;
-//   document.getElementById("toggleRotationBtn").style.background = rotationEnabled ? "green" : "black";
-//   if (!rotationEnabled) {
-//     document.getElementById("map").style.transform = "rotate(0deg)";
-//   }
-// });
-
-// const toggleRotationButton = document.getElementById("rotationToggle");
-// toggleRotationButton.addEventListener("click", () => {
-//   rotationEnabled = !rotationEnabled;
-
-//   if (!rotationEnabled) {
-//     // 💡 Stop device orientation updates
-//     window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
-//     window.removeEventListener("deviceorientation", handleOrientation, true);
-
-//     // 💡 Reset rotation CSS
-//     const container = document.getElementById("map");
-//     container.style.transform = "rotate(0deg)";
-//     container.style.transition = "transform 0.3s ease-out";
-
-//     // Optionally reset map bearing visually
-//     map.setBearing?.(0); // if using a plugin that supports setBearing
-//   } else {
-//     // 💡 Start listening again
-//     if (window.DeviceOrientationEvent) {
-//       window.addEventListener("deviceorientationabsolute", handleOrientation, true);
-//       window.addEventListener("deviceorientation", handleOrientation, true);
-//     }
-//   }
-// });
-
-// document.getElementById("rotationToggle").addEventListener("click", toggleRotation);
-
-// function smoothHeading(current, previous) {
-//   let delta = current - previous;
-//   if (delta > 180) delta -= 360;
-//   if (delta < -180) delta += 360;
-//   return previous + delta * 0.1; // adjust 0.1 for smoothness
-// }
-
-// function toggleRotation() {
-//   if (orientationListenerActive) {
-//     window.removeEventListener("deviceorientationabsolute", handleOrientation);
-//     orientationListenerActive = false;
-//     mapEl.style.transform = "rotate(0deg) scale(1)";
-//     wrapperEl.style.transform = "rotate(0deg)";
-//   } else {
-//     window.addEventListener("deviceorientationabsolute", handleOrientation);
-//     orientationListenerActive = true;
-//   }
-// };
-
-// // 🧭 Orientation Handler
-// function handleOrientation(event) {
-//   if (!orientationListenerActive || !event.alpha) return;
-
-//   const now = Date.now();
-//   if (now - lastUpdate < 100) return; // 10 fps throttle
-//   lastUpdate = now;
-
-//   const heading = event.alpha;
-//   const delta = Math.abs(heading - (lastHeading ?? heading));
-//   if (delta > 90) return; // skip sudden 180° flips
-
-//   lastHeading = heading;
-//   rotateDeg = 360 - heading;
-//   wrapperEl.style.transform = `rotate(${rotateDeg}deg)`;
-//   mapEl.style.transform = `rotate(${rotateDeg}deg) scale(1.8)`;
-
-//   // Compass Arrow (optional)
-//   const compass = document.getElementById("compassArrow");
-//   if (compass) compass.style.transform = `rotate(${heading}deg)`;
-// }
-
-// function updateCompass(angle) {
-//   document.getElementById("compassIcon").style.transform = `rotate(${angle}deg)`;
-// }
-
-
-// window.addEventListener("deviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation", e => {
-//   if (e.absolute || e.webkitCompassHeading !== undefined) {
-//     const heading = e.webkitCompassHeading || 360 - e.alpha;
-//     currentHeading = heading;
-//     rotateMap(currentHeading);
-//   }
-// });
 
 function setTrackingButtonsEnabled(enabled) {
   const startBtn = document.getElementById("startBtn");
@@ -149,48 +48,6 @@ function setTrackingButtonsEnabled(enabled) {
   if (pauseBtn) pauseBtn.disabled = !enabled;
   if (stopBtn) stopBtn.disabled = !enabled;
 }
-
-// let lastHeadingCoords = null;
-
-// function computeBearing(a, b) {
-//   const toRad = x => x * Math.PI / 180;
-//   const toDeg = x => x * 180 / Math.PI;
-//   const dLon = toRad(b.lng - a.lng);
-//   const lat1 = toRad(a.lat);
-//   const lat2 = toRad(b.lat);
-
-//   const y = Math.sin(dLon) * Math.cos(lat2);
-//   const x = Math.cos(lat1) * Math.sin(lat2) -
-//             Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-//   return (toDeg(Math.atan2(y, x)) + 360) % 360;
-// }
-
-// function rotateMapTo(bearing) {
-//   const mapEl = document.getElementById("map");
-//   mapEl.style.transform = `rotate(${-bearing}deg)`;
-
-//   document.querySelectorAll(".leaflet-marker-icon, .leaflet-popup").forEach(el => {
-//     el.style.transform = `rotate(${bearing}deg)`;
-//   });
-// }
-
-// function updateCompass(bearing) {
-//   const compass = document.getElementById("compass");
-//   if (compass) compass.style.transform = `rotate(${bearing}deg)`;
-// }
-
-// function simulateHeadingFromMovement(newCoords) {
-//   if (!lastHeadingCoords) {
-//     lastHeadingCoords = newCoords;
-//     return;
-//   }
-
-//   const bearing = computeBearing(lastHeadingCoords, newCoords);
-//   rotateMapTo(bearing);
-//   updateCompass(bearing);
-//   lastHeadingCoords = newCoords;
-// }
-
 
 const noteIcon = L.divIcon({
   className: 'custom-icon note-icon',
@@ -215,50 +72,6 @@ const videoIcon = L.divIcon({
   iconSize: [24, 24]
 });
 
-// const noteIcon = L.divIcon({
-//   className: 'custom-icon',
-//   html: `
-//     <div title="Note">
-//       <svg width="24" height="24" viewBox="0 0 24 24">
-//         <path fill="orange" d="M3 3v18h18V3H3zm16 16H5V5h14v14z"/>
-//         <text x="6" y="17" font-size="12" fill="black">📝</text>
-//       </svg>
-//     </div>`
-// });
-
-// const photoIcon = L.divIcon({
-//   className: 'custom-icon',
-//   html: `
-//     <div title="Photo">
-//       <svg width="24" height="24" viewBox="0 0 24 24">
-//         <path fill="#2196F3" d="M21 19V5H3v14h18zM3 3h18a2 2 0 012 2v14a2 2 0 01-2 2H3a2 2 0 01-2-2V5a2 2 0 012-2z"/>
-//         <circle cx="12" cy="12" r="3" fill="white"/>
-//       </svg>
-//     </div>`
-// });
-
-// const audioIcon = L.divIcon({
-//   className: 'custom-icon',
-//   html: `
-//     <div title="Audio">
-//       <svg width="24" height="24" viewBox="0 0 24 24">
-//         <rect x="9" y="4" width="6" height="14" fill="purple"/>
-//         <path d="M5 10v4h2v-4H5zm12 0v4h2v-4h-2z" fill="gray"/>
-//       </svg>
-//     </div>`
-// });
-
-// const videoIcon = L.divIcon({
-//   className: 'custom-icon',
-//   html: `
-//     <div title="Video">
-//       <svg width="24" height="24" viewBox="0 0 24 24">
-//         <rect x="4" y="5" width="14" height="14" fill="#4CAF50"/>
-//         <polygon points="10,9 15,12 10,15" fill="white"/>
-//       </svg>
-//     </div>`
-// });
-
 // === INIT LEAFLET MAP ===
 
 function initMap(callback) {
@@ -268,12 +81,6 @@ function initMap(callback) {
   }
 //   // Now safely initialize a new map
   map = L.map('map').setView([0, 0], 15);
-
-//   L.Control.geocoder({
-//   defaultMarkGeocode: true
-// }).addTo(map);
-//   L.Control.geocoder({ position: 'topleft' }).addTo(map);
-
 
   // Add OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -387,38 +194,6 @@ function haversineDistance(coord1, coord2) {
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
-// function rotateMap(deg) {
-//   if (!rotationEnabled) return;
-//   const mapEl = document.getElementById("map");
-//   mapEl.style.transformOrigin = "center center";
-//   mapEl.style.transition = "transform 0.3s ease";
-//   mapEl.style.transform = `rotate(${-deg}deg)`; // negative to match heading
-// }
-
-// function handleOrientation(event) {
-//   if (!rotationEnabled) return;
-
-//   const heading = event.alpha ?? 0;
-//   const rotation = 360 - heading;
-
-//   const container = document.getElementById("map");
-//   container.style.transform = `rotate(${rotation}deg) scale(1.50)`; // slight scale to fill edges
-//   container.style.transition = "transform 0.3s ease-out";
-
-//   lastHeading = heading;
-// }
-
-// function getBearing(start, end) {
-//   const dLon = (end.lng - start.lng) * Math.PI / 180;
-//   const lat1 = start.lat * Math.PI / 180;
-//   const lat2 = end.lat * Math.PI / 180;
-//   const y = Math.sin(dLon) * Math.cos(lat2);
-//   const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLon);
-//   const brng = Math.atan2(y, x) * 180 / Math.PI;
-//   return (brng + 360) % 360;
-// }
-
-
 // === ROUTE TRACKING ===
 
 function disableStartButton() {
@@ -427,104 +202,6 @@ function disableStartButton() {
     btn.disabled = true;
   }
 }
-
-// window.startTracking = function () {
-//   openAccessibilityForm();
-
-//   setTrackingButtonsEnabled(true);
-//   document.getElementById("startBtn").disabled = true;
-//   document.getElementById("resetBtn").disabled = true;
-//   document.getElementById("takePhotoBtn").disabled = false;
-
-
-//   isTracking = true;
-//   setControlButtonsEnabled(false);  // ⛔ disable unrelated controls
-
-
-//   startAutoBackup();
-
-//   if (navigator.geolocation) {
-//     watchId = navigator.geolocation.watchPosition(
-//       position => {
-//         const { latitude, longitude, accuracy } = position.coords;
-//         if (accuracy > 25) return;
-
-//         const latLng = { lat: latitude, lng: longitude };
-
-//         if (lastCoords) {
-//           const dist = haversineDistance(lastCoords, latLng);
-//           if (dist > 0.2) return; // skip GPS jumps
-//           totalDistance += dist;
-//         }
-
-//         lastCoords = latLng;
-//         path.push(latLng);
-//         marker.setLatLng(latLng);
-//         map.panTo(latLng);
-
-//         // Draw new polyline for the path
-//         if (path.length > 1) {
-//           const segment = [path[path.length - 2], path[path.length - 1]];
-//           L.polyline(segment, { color: 'green' }).addTo(map);
-//         }
-
-//         routeData.push({
-//           type: "location",
-//           timestamp: Date.now(),
-//           coords: latLng
-//         });
-
-//         document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
-//         //document.getElementById("liveDistance").textContent = totalDistance.toFixed(2) + " km";
-//       },
-//       err => console.error("GPS error:", err),
-//       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
-//     );
-
-//     //startTimer();
-//     startTime = Date.now() - elapsedTime;
-// clearInterval(timerInterval);
-// updateTimerDisplay();
-// timerInterval = setInterval(updateTimerDisplay, 1000);
-
-//   } else {
-//     alert("Geolocation not supported");
-//   }
-// };
-
-// window.startTracking = function () {
-//   openAccessibilityForm();
-
-//   setTrackingButtonsEnabled(true);
-//   document.getElementById("startBtn").disabled = true;
-//   document.getElementById("resetBtn").disabled = true;
-//   document.getElementById("takePhotoBtn").disabled = false;
-
-//   isTracking = true;
-//   setControlButtonsEnabled(false);
-//   startAutoBackup();
-
-//   if (!navigator.geolocation) {
-//     alert("Geolocation not supported");
-//     return;
-//   }
-
-//   // Tracking logic
-//   watchId = navigator.geolocation.watchPosition(
-//     positionHandler,
-//     err => console.error("GPS error:", err),
-//     {
-//       enableHighAccuracy: true,
-//       maximumAge: 0,
-//       timeout: 5000
-//     }
-//   );
-
-//   startTime = Date.now() - elapsedTime;
-//   clearInterval(timerInterval);
-//   updateTimerDisplay();
-//   timerInterval = setInterval(updateTimerDisplay, 1000);
-// };
 
 window.startTracking = function () {
   openAccessibilityForm();
@@ -537,14 +214,6 @@ window.startTracking = function () {
   isTracking = true;
   setControlButtonsEnabled(false);
   startAutoBackup();
-
-//   if (rotationEnabled && orientationListenerActive) {
-//   window.addEventListener("deviceorientationabsolute", handleOrientation);
-//   window.addEventListener("deviceorientation", handleOrientation);
-//   orientationListenerActive = true;
-// } else {
-//   mapWrapper.style.transform = `none`;
-// }
 
   if (navigator.geolocation) {
     watchId = navigator.geolocation.watchPosition(
@@ -560,11 +229,6 @@ window.startTracking = function () {
           if (dist < 0.005) return; // Jitter
           totalDistance += dist;
         }
-
-        // if (rotationEnabled && !("ondeviceorientationabsolute" in window || "ondeviceorientation" in window)) {
-        //     const simulatedBearing = getBearing(lastCoords, latLng);
-        //     rotateMap(simulatedBearing);
-        //   }
 
         lastCoords = latLng;
         path.push(latLng);
@@ -603,29 +267,6 @@ window.startTracking = function () {
     alert("Geolocation not supported");
   }
 
-  // Listen for real heading if supported
-//   if (window.DeviceOrientationEvent) {
-//     window.addEventListener("deviceorientationabsolute", e => {
-//       if (e.absolute && e.alpha != null) {
-//         const heading = 360 - e.alpha;
-//         rotateMapTo(heading);
-//         updateCompass(heading);
-//       }
-//     }, true);
-//   }
-//   if (rotationEnabled) {
-//   handleOrientation({ alpha: lastHeading ?? 0 });
-// }
-
-};
-
-// let followHeading = false;
-
-// document.getElementById("compassToggle").addEventListener("click", () => {
-//   followHeading = !followHeading;
-//   document.getElementById("compassToggle").textContent = followHeading ? "🧭⇨" : "🧭";
-// });
-
 // Extracted position handler
 function positionHandler(position) {
   const { latitude, longitude, accuracy } = position.coords;
@@ -634,22 +275,6 @@ function positionHandler(position) {
   const latLng = { lat: latitude, lng: longitude };
 
   marker.setLatLng(latLng);
-
-//   if (followHeading && typeof heading === "number" && !isNaN(heading)) {
-//     map.setView(latLng, map.getZoom(), {
-//       animate: true,
-//       pan: {
-//         duration: 0.5
-//       }
-//     });
-
-//     map.setBearing?.(heading); // Optional if using a plugin
-//   } else {
-//     if (!rotationEnabled) {
-//    map.panTo(latLng, { animate: true });
-// }
-   
-//   }
 
   if (lastCoords) {
     const dist = haversineDistance(lastCoords, latLng);
@@ -684,7 +309,6 @@ function positionHandler(position) {
 
   document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
 }
-
 
 window.stopTracking = function () {
   
@@ -727,12 +351,6 @@ function resetApp() {
   // Stop autosave and clear backup
   stopAutoBackup();
   localStorage.removeItem("route_backup");
-
-  // Re-enable Start button, disable Pause/Stop
-  // document.getElementById("startBtn").disabled = false;
-  // document.getElementById("pauseBtn").disabled = true;
-  // document.getElementById("stopBtn").disabled = true;
-  // document.getElementById("resetBtn").disabled = false;
 
   // Clear map layers if needed
   if (map) {
@@ -791,14 +409,6 @@ function resumeTracking() {
   clearInterval(timerInterval);
   startTime = Date.now() - elapsedTime;
   timerInterval = setInterval(updateTimerDisplay, 1000);
-
-//   if (rotationEnabled && orientationListenerActive) {
-//   window.addEventListener("deviceorientationabsolute", handleOrientation);
-//   window.addEventListener("deviceorientation", handleOrientation);
-//   orientationListenerActive = true;
-// } else {
-//   mapWrapper.style.transform = `none`;
-// }
 
   // Resume location tracking
   if (navigator.geolocation) {
@@ -1219,54 +829,10 @@ window.loadSession = function (index) {
     showRouteDataOnMap();
     setTrackingButtonsEnabled(false);
 
-    //disableStartButton();
   });
-
-  //document.getElementById("exportSummaryBtn").disabled = false;
 };
 
 // === LOAD SESSION + IndexDB===
-// window.loadSession = async function (index) {
-//   const sessions = JSON.parse(localStorage.getItem("sessions") || "[]");
-//   const session = sessions[index];
-
-//   if (!session || !session.data || session.data.length === 0) {
-//     alert("❌ This session has no data to export.");
-//     return;
-//   }
-
-//   routeData = [];
-//   for (const entry of session.data) {
-//     if (entry.mediaId) {
-//       try {
-//         const base64 = await getMediaFromIndexedDB(entry.mediaId);
-//         routeData.push({ ...entry, content: base64 });
-//       } catch {
-//         routeData.push({ ...entry, content: null });
-//       }
-//     } else {
-//       routeData.push(entry);
-//     }
-//   }
-
-//   totalDistance = parseFloat(session.distance);
-//   elapsedTime = 0;
-//   lastCoords = null;
-
-//   path = routeData.filter(e => e.type === "location").map(e => e.coords);
-
-//   document.getElementById("timer").textContent = session.time;
-//   document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
-
-//   initMap(() => {
-//     drawSavedRoutePath();
-//     showRouteDataOnMap();
-//     setTrackingButtonsEnabled(false);
-//   });
-
-//   //document.getElementById("exportSummaryBtn").disabled = false;
-// };
-
 
 function drawSavedRoutePath() {
   if (!map || path.length === 0) return;
@@ -1343,17 +909,6 @@ window.exportData = function () {
 };
 
 // === EXPORT GPX ===
-// window.exportData = function () {
-//   const fileName = `route-${new Date().toISOString()}.json`;
-//   const blob = new Blob([JSON.stringify(routeData, null, 2)], { type: "application/json" });
-
-//   const link = document.createElement("a");
-//   link.href = URL.createObjectURL(blob);
-//   link.download = fileName;
-//   document.body.appendChild(link);
-//   link.click();
-//   document.body.removeChild(link);
-// };
 
 window.exportGPX = function () {
   let gpx = `<?xml version="1.0" encoding="UTF-8"?>
@@ -3248,64 +2803,7 @@ async function enrichRouteWithElevation(data) {
   return enriched;
 }
 
-// async function getElevation(lat, lng) {
-//   const url = `https://api.opentopodata.org/v1/aster30m?locations=${lat},${lng}`;
-//   const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
 
-//   try {
-//     const res = await fetch(proxy);
-//     if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
-
-//     const json = await res.json();
-//     const data = JSON.parse(json.contents); // the real response is inside "contents"
-//     return data.results?.[0]?.elevation ?? null;
-//   } catch (err) {
-//     console.warn("⚠️ Failed to fetch elevation:", err);
-//     return null;
-//   }
-// }
-
-// async function getElevation(lat, lng) {
-//   const url = `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`;
-
-//   try {
-//     const res = await fetch(url);
-//     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-//     const data = await res.json();
-//     return data.elevation ?? null;
-//   } catch (err) {
-//     console.warn("⚠️ Failed to fetch elevation:", err);
-//     return null;
-//   }
-// }
-
-// async function getElevation(lat, lng) {
-//   const url = `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`;
-
-//   try {
-//     console.log(`🌍 Fetching elevation for [${lat}, ${lng}]`);
-
-//     const res = await fetch(url);
-//     if (!res.ok) {
-//       throw new Error(`HTTP ${res.status} - ${res.statusText}`);
-//     }
-
-//     const data = await res.json();
-
-//     const elevation = data.elevation;
-//     if (typeof elevation === 'number') {
-//       console.log(`✅ Elevation fetched: ${elevation} m`);
-//       return elevation;
-//     } else {
-//       console.warn(`⚠️ Invalid elevation value returned for [${lat}, ${lng}]`, data);
-//       return null;
-//     }
-
-//   } catch (err) {
-//     console.error(`❌ Failed to fetch elevation for [${lat}, ${lng}]:`, err);
-//     return null;
-//   }
-// }
 async function getElevation(lat, lng) {
   const url = `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`;
 
@@ -3337,8 +2835,6 @@ async function getElevation(lat, lng) {
     return null;
   }
 }
-
-
 
 async function generateElevationChartBase64(coordsWithElevation) {
   const canvas = document.createElement('canvas');
