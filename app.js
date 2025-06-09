@@ -1,3 +1,4 @@
+
 // === GLOBAL VARIABLES ===
 let map, marker, watchId;
 let path = [];
@@ -11,6 +12,18 @@ let elapsedTime = 0;
 let mediaRecorder;
 let audioChunks = [];
 let isTracking = false;
+let rotationEnabled = false;
+let currentHeading = 0;
+let lastHeading = null;
+let headingListenerAttached = false;
+let rotateDeg = 0;
+let headingUpdateTime = 0;
+let orientationListenerActive = false;
+let lastUpdate = 0;
+let lastRotationUpdate = 0;
+let currentRotation = 0;
+let lastOrientationUpdate = 0;
+let mapWrapper = document.getElementById('mapWrapper'); // wrapper div for #map
 
 function setControlButtonsEnabled(enabled) {
   const idsToDisable = [
@@ -38,6 +51,7 @@ function setControlButtonsEnabled(enabled) {
     }
   });
 }
+
 
 function setTrackingButtonsEnabled(enabled) {
   const startBtn = document.getElementById("startBtn");
@@ -72,15 +86,61 @@ const videoIcon = L.divIcon({
   iconSize: [24, 24]
 });
 
+// const noteIcon = L.divIcon({
+//   className: 'custom-icon',
+//   html: `
+//     <div title="Note">
+//       <svg width="24" height="24" viewBox="0 0 24 24">
+//         <path fill="orange" d="M3 3v18h18V3H3zm16 16H5V5h14v14z"/>
+//         <text x="6" y="17" font-size="12" fill="black">📝</text>
+//       </svg>
+//     </div>`
+// });
+
+// const photoIcon = L.divIcon({
+//   className: 'custom-icon',
+//   html: `
+//     <div title="Photo">
+//       <svg width="24" height="24" viewBox="0 0 24 24">
+//         <path fill="#2196F3" d="M21 19V5H3v14h18zM3 3h18a2 2 0 012 2v14a2 2 0 01-2 2H3a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+//         <circle cx="12" cy="12" r="3" fill="white"/>
+//       </svg>
+//     </div>`
+// });
+
+// const audioIcon = L.divIcon({
+//   className: 'custom-icon',
+//   html: `
+//     <div title="Audio">
+//       <svg width="24" height="24" viewBox="0 0 24 24">
+//         <rect x="9" y="4" width="6" height="14" fill="purple"/>
+//         <path d="M5 10v4h2v-4H5zm12 0v4h2v-4h-2z" fill="gray"/>
+//       </svg>
+//     </div>`
+// });
+
+// const videoIcon = L.divIcon({
+//   className: 'custom-icon',
+//   html: `
+//     <div title="Video">
+//       <svg width="24" height="24" viewBox="0 0 24 24">
+//         <rect x="4" y="5" width="14" height="14" fill="#4CAF50"/>
+//         <polygon points="10,9 15,12 10,15" fill="white"/>
+//       </svg>
+//     </div>`
+// });
+
 // === INIT LEAFLET MAP ===
 
 function initMap(callback) {
+
   //   // If a map already exists on this container, remove it
   if (map && map.remove) {
     map.remove(); // Clean up the previous map instance
   }
 //   // Now safely initialize a new map
   map = L.map('map').setView([0, 0], 15);
+
 
   // Add OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -180,9 +240,6 @@ function resumeTimer() {
   }
 }
 
-// function pad(n) {
-//   return n.toString().padStart(2, "0");
-// }
 
 // === DISTANCE ===
 function haversineDistance(coord1, coord2) {
@@ -225,18 +282,15 @@ window.startTracking = function () {
 
         if (lastCoords) {
           const dist = haversineDistance(lastCoords, latLng);
-          if (dist > 1) return;     // GPS jump
-          if (dist < 0.005) return; // Jitter
+          if (dist > 1 || dist < 0.005) return;
           totalDistance += dist;
         }
 
         lastCoords = latLng;
         path.push(latLng);
+
         marker.setLatLng(latLng);
-        // map.panTo(latLng, { animate: true });
-        if (!rotationEnabled) {
-  map.panTo(latLng, { animate: true });
-}
+        map.panTo(latLng, { animate: true });
 
         if (path.length > 1) {
           const segment = [path[path.length - 2], path[path.length - 1]];
@@ -250,9 +304,6 @@ window.startTracking = function () {
         });
 
         document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
-
-        // Simulate heading
-        // simulateHeadingFromMovement(latLng);
       },
       err => console.error("GPS error:", err),
       { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
@@ -263,9 +314,11 @@ window.startTracking = function () {
     updateTimerDisplay();
     timerInterval = setInterval(updateTimerDisplay, 1000);
 
-  } else {
+    } else {
     alert("Geolocation not supported");
   }
+};
+
 
 // Extracted position handler
 function positionHandler(position) {
@@ -310,8 +363,10 @@ function positionHandler(position) {
   document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
 }
 
+
 window.stopTracking = function () {
-  
+  // 5. Cleanup (if needed for pause/stop tracking)
+
   if (watchId) navigator.geolocation.clearWatch(watchId);
   stopTimer();
   stopAutoBackup();
@@ -345,8 +400,6 @@ function resetApp() {
   // Reset display
   document.getElementById("distance").textContent = "0.00 km";
   document.getElementById("timer").textContent = "00:00:00";
-  // document.getElementById("liveDistance").textContent = "0.00 km";
-  // document.getElementById("liveTimer").textContent = "00:00:00";
 
   // Stop autosave and clear backup
   stopAutoBackup();
@@ -401,48 +454,60 @@ window.confirmAndResetApp = function () {
   // }
   const confirmReset = confirm("⚠️ Are you sure you want to reset?");
   if (confirmReset) resetApp();
-  //resetApp();
 };
 
-function resumeTracking() {
-  // Restart timer interval even if timer was running silently
-  clearInterval(timerInterval);
-  startTime = Date.now() - elapsedTime;
-  timerInterval = setInterval(updateTimerDisplay, 1000);
+window.resumeTracking = function () {
+  if (!isPaused) return;
 
-  // Resume location tracking
+  isPaused = false;
+  setTrackingButtonsEnabled(true);
+
   if (navigator.geolocation) {
     watchId = navigator.geolocation.watchPosition(
       position => {
         const { latitude, longitude, accuracy } = position.coords;
-        if (accuracy > 25) return;
+        if (accuracy > 50) return;
 
         const latLng = { lat: latitude, lng: longitude };
+
         if (lastCoords) {
           const dist = haversineDistance(lastCoords, latLng);
-          if (dist > 0.2) return;
+          if (dist > 1 || dist < 0.005) return;
           totalDistance += dist;
         }
 
         lastCoords = latLng;
         path.push(latLng);
-        marker.setLatLng(latLng);
-        if (!rotationEnabled) {
-  map.panTo(latLng, { animate: true });
-}
-        L.polyline(path, { color: 'green' }).addTo(map);
 
-        routeData.push({ type: "location", timestamp: Date.now(), coords: latLng });
+        marker.setLatLng(latLng);
+        map.panTo(latLng, { animate: true });
+
+        if (path.length > 1) {
+          const segment = [path[path.length - 2], path[path.length - 1]];
+          L.polyline(segment, { color: 'green', weight: 4 }).addTo(map);
+        }
+
+        routeData.push({
+          type: "location",
+          timestamp: Date.now(),
+          coords: latLng
+        });
+
         document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
-        //document.getElementById("liveDistance").textContent = totalDistance.toFixed(2) + " km";
       },
       err => console.error("GPS error:", err),
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
     );
-  }
 
+    startTime = Date.now() - elapsedTime;
+    clearInterval(timerInterval);
+    updateTimerDisplay();
+    timerInterval = setInterval(updateTimerDisplay, 1000);
+
+  }
   startAutoBackup();
-}
+};
+
 
 function Summary() {
   alert(`🏁 Route Stats:
@@ -453,6 +518,11 @@ Total Time: ${document.getElementById("timer").textContent}`);
 // === TRACKING ===
 window.togglePause = function () {
   isPaused = !isPaused;
+  // 5. Cleanup (if needed for pause/stop tracking)
+  function stopRotation() {
+  window.removeEventListener("deviceorientation", handleOrientation, true);
+  orientationListenerActive = false;
+}
   //document.getElementById("pauseButtonLabel").textContent = isPaused ? "Resume" : "Pause";
   if (!isPaused) {
     startTime = Date.now() - elapsedTime;
@@ -828,11 +898,8 @@ window.loadSession = function (index) {
     drawSavedRoutePath();
     showRouteDataOnMap();
     setTrackingButtonsEnabled(false);
-
   });
-};
-
-// === LOAD SESSION + IndexDB===
+}
 
 function drawSavedRoutePath() {
   if (!map || path.length === 0) return;
@@ -869,8 +936,6 @@ function loadMostRecentSession(callback) {
   // Update UI
   document.getElementById("timer").textContent = mostRecent.time;
   document.getElementById("distance").textContent = totalDistance.toFixed(2) + " km";
-  //document.getElementById("liveTimer").textContent = mostRecent.time;
-  //document.getElementById("liveDistance").textContent = totalDistance.toFixed(2) + " km";
 
   if (typeof initMap === "function") {
     initMap(() => {
@@ -909,7 +974,6 @@ window.exportData = function () {
 };
 
 // === EXPORT GPX ===
-
 window.exportGPX = function () {
   let gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="NatureTracker" xmlns="http://www.topografix.com/GPX/1/1">
@@ -1281,231 +1345,6 @@ async function generateElevationChartCanvas(route) {
 
   return canvas;
 }
-
-// For imported route test
-// async function exportRouteSummary() {
-//   console.log("📦 Attempting route export...");
-
-//   if (!routeData || !Array.isArray(routeData) || routeData.length === 0) {
-//     alert("⚠️ No route data available to export.");
-//     return;
-//   }
-
-//   const mostRecent = JSON.parse(localStorage.getItem("sessions") || "[]").slice(-1)[0];
-//   const defaultName = mostRecent?.name || "My Route";
-//   const name = prompt("Enter a title for this route summary:", defaultName);
-//   if (!name) return;
-
-//   const zip = new JSZip();
-//   const notesFolder = zip.folder("notes");
-//   const imagesFolder = zip.folder("images");
-//   const audioFolder = zip.folder("audio");
-//   const mediaForArchive = {};
-
-//   let markersJS = "", pathCoords = [], enriched = [], photoCounter = 1, noteCounter = 1, audioCounter = 1;
-
-//   for (const entry of routeData) {
-//     if (entry.type === "location") {
-//       pathCoords.push([entry.coords.lat, entry.coords.lng]);
-//       enriched.push({ ...entry }); // clone for later enrichment
-//     } else if (entry.type === "text") {
-//       notesFolder.file(`note${noteCounter}.txt`, entry.content);
-//       markersJS += `
-// L.marker([${entry.coords.lat}, ${entry.coords.lng}], {
-//   icon: L.divIcon({ className: 'custom-icon', html: '📝' })
-// }).addTo(map)
-//   .bindPopup("<b>Note ${noteCounter}</b><br><pre>${entry.content}</pre>");
-// `;
-//       noteCounter++;
-//     } else if (entry.type === "photo") {
-//       const base64 = entry.content.split(",")[1];
-//       imagesFolder.file(`photo${photoCounter}.jpg`, base64, { base64: true });
-//       mediaForArchive[`photo${photoCounter}.jpg`] = base64;
-//       markersJS += `
-// L.marker([${entry.coords.lat}, ${entry.coords.lng}], {
-//   icon: L.divIcon({ className: 'custom-icon', html: '📸' })
-// }).addTo(map)
-//   .bindPopup("<b>Photo ${photoCounter}</b><br><img src='images/photo${photoCounter}.jpg' style='width:100%' onclick='openFullscreen(this)'>");
-// `;
-//       photoCounter++;
-//     } else if (entry.type === "audio") {
-//       const base64 = entry.content.split(",")[1];
-//       audioFolder.file(`audio${audioCounter}.webm`, base64, { base64: true });
-//       markersJS += `
-// L.marker([${entry.coords.lat}, ${entry.coords.lng}])
-//   .addTo(map)
-//   .bindPopup("<b>Audio ${audioCounter}</b><br><audio controls src='audio/audio${audioCounter}.webm'></audio>");
-// `;
-//       audioCounter++;
-//     }
-//   }
-
-//   // Enrich with elevation
-//   for (const entry of enriched) {
-//     if (entry.type === "location" && entry.elevation == null) {
-//       entry.elevation = await getElevation(entry.coords.lat, entry.coords.lng);
-//     }
-//   }
-
-//   // Accessibility computation
-//   let accessibleLength = 0;
-//   for (let i = 1; i < enriched.length; i++) {
-//     const a = enriched[i - 1], b = enriched[i];
-//     if (a.elevation != null && b.elevation != null) {
-//       const dist = haversineDistance(a.coords, b.coords);
-//       const elev = b.elevation - a.elevation;
-//       const grade = (elev / (dist * 1000)) * 100;
-//       if (Math.abs(grade) <= 6) accessibleLength += dist * 1000;
-//     }
-//   }
-
-//   // Elevation chart PNG
-//   const elevationCanvas = await generateElevationChartCanvas(enriched);
-//   const base64Chart = elevationCanvas.toDataURL("image/png");
-//   const elevationBlob = await new Promise(res => elevationCanvas.toBlob(res, "image/png"));
-//   zip.file("elevation.png", elevationBlob);
-//   mediaForArchive["elevation.png"] = base64Chart.split(",")[1];
-
-//   // Accessibility data
-//   const accessibilityJSON = JSON.stringify({
-//     ...routeData.find(e => e.type === "accessibility")?.content || {},
-//     accessibleLength: accessibleLength.toFixed(0)
-//   });
-
-//   const boundsJSON = JSON.stringify(pathCoords);
-
-//   const htmlContent = `
-// <!DOCTYPE html>
-// <html>
-// <head>
-//   <meta charset="UTF-8">
-//   <title>${name}</title>
-//   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-//   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-//   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-//   <style>
-//     body { font-family: Arial; margin: 0; }
-//     #map { height: 50vh; }
-//     #modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.8); display:none; align-items:center; justify-content:center; }
-//     #modal img { max-width: 90%; max-height: 90%; }
-//   </style>
-// </head>
-// <body>
-// <h2>${name}</h2>
-// <div>
-//   <p><b>Distance:</b> ${totalDistance.toFixed(2)} km</p>
-//   <p><b>Photos:</b> ${photoCounter - 1}</p>
-//   <p><b>Notes:</b> ${noteCounter - 1}</p>
-//   <p><b>Audios:</b> ${audioCounter - 1}</p>
-//   <p><b>Accessible Length:</b> ${accessibleLength.toFixed(0)} m</p>
-// </div>
-// <div id="description">
-//     <h4>General Description:</h4>
-//     <textarea placeholder="Add notes or observations about the route here..."></textarea>
-//   </div>
-//   <div id="accessibilityDetailsContainer"></div>
-// <canvas id="chart" width="800" height="200"></canvas>
-// <!-- <br><button onclick="document.getElementById('modal').style.display='flex'">🔍 View Chart Fullscreen</button>
-//  <div id="modal" onclick="this.style.display='none'"><img src="elevation.png"></div> -->
-
-// <div style="margin-top: 10px;">
-//   <b>Gradient Legend:</b><br>
-//   <span style="color:green">🟩 ≤ 6% (Mild)</span>&nbsp;&nbsp;
-//   <span style="color:orange">🟧 6–10% (Moderate)</span>&nbsp;&nbsp;
-//   <span style="color:red">🟥 > 10% (Steep)</span>
-// </div>
-
-// <div id="map"></div>
-// <script>
-//   const map = L.map('map');
-//   const bounds = L.latLngBounds(${boundsJSON});
-//   map.fitBounds(bounds);
-//   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-//   const route = ${JSON.stringify(enriched)};
-//   const haversine = (a, b) => {
-//     const toRad = x => x * Math.PI / 180, R = 6371;
-//     const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
-//     const lat1 = toRad(a.lat), lat2 = toRad(b.lat);
-//     const a_ = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
-//     return R * 2 * Math.atan2(Math.sqrt(a_), Math.sqrt(1-a_));
-//   };
-
-//   for (let i = 1; i < route.length; i++) {
-//     const a = route[i - 1], b = route[i];
-//     const dist = haversine(a.coords, b.coords);
-//     const elev = b.elevation - a.elevation;
-//     const grade = (elev / (dist * 1000)) * 100;
-//     const color = Math.abs(grade) > 10 ? 'red' : Math.abs(grade) > 6 ? 'orange' : 'green';
-//     L.polyline([a.coords, b.coords], { color }).addTo(map);
-//   }
-
-//   ${markersJS}
-
-//   // Accessibility summary rendering
-// // (function(){
-// //   const data = ${accessibilityJSON};
-// //   if (!data) return;
-// //   const html = \`
-// //     <div id="accessibilityDetails">
-// //       <h3>♿ Accessibility Details</h3>
-// //       <ul>
-// //         <li><b>Disabled Parking:</b> \${data.disabledParkingCount}</li>
-// //         <li><b>Path Type:</b> \${data.pathType}</li>
-// //         <li><b>Accessible Length:</b> \${data.accessibleLength} m</li>
-// //         <li><b>Route Type:</b> \${data.routeType}</li>
-// //         <li><b>Slope:</b> \${data.slope}</li>
-// //         <li><b>Points of Interest:</b> \${data.pointsOfInterest}</li>
-// //         <li><b>Lookouts:</b> \${data.lookouts ? "Yes" : "No"}</li>
-// //         <li><b>Picnic Spots:</b> \${data.picnicSpots ? "Yes" : "No"}</li>
-// //         <li><b>Accessible Toilets:</b> \${data.accessibleToilets ? "Yes" : "No"}</li>
-// //         <li><b>Benches:</b> \${data.benches ? "Yes" : "No"}</li>
-// //         <li><b>Shade:</b> \${data.shade}</li>
-// //       </ul>
-// //     </div>\`;
-// //   document.getElementById("accessibilityDetailsContainer").innerHTML = html;
-// // })();
-
-//   new Chart(document.getElementById("chart"), {
-//     type: "line",
-//     data: {
-//       labels: route.map((c, i) => i),
-//       datasets: [{
-//         label: "Elevation (m)",
-//         data: route.map(c => c.elevation),
-//         borderColor: "green",
-//         tension: 0.3,
-//         fill: true
-//       }]
-//     }
-//   });
-
-//   // function openFullscreen(img) {
-//   //   const modal = document.getElementById("modal");
-//   //   modal.querySelector("img").src = img.src;
-//   //   modal.style.display = 'flex';
-//   // }
-// </script>
-// </body>
-// </html>
-// `;
-
-//   // Save full HTML and media
-//   zip.file("index.html", htmlContent);
-//   SummaryArchive.saveToArchive(name, htmlContent, mediaForArchive);
-
-//   try {
-//     const blob = await zip.generateAsync({ type: "blob" });
-//     const url = URL.createObjectURL(blob);
-//     const a = document.createElement("a");
-//     a.href = url;
-//     a.download = `route-summary-${Date.now()}.zip`;
-//     a.click();
-//     console.log("✅ Export complete.");
-//   } catch (e) {
-//     console.error("❌ ZIP generation failed:", e);
-//   }
-// }
 
 //For normal app route tracking
 async function exportRouteSummary() {
@@ -2664,13 +2503,6 @@ function showPhotoCleanupDialog() {
       cursor: pointer;
     `;
 
-    // deleteBtn.onclick = () => {
-    //   photos.splice(index, 1);
-    //   localStorage.setItem("photos", JSON.stringify(photos));
-    //   imgWrapper.remove();
-    //   renderLocalStorageStatus();
-    // };
-
     deleteBtn.onclick = () => {
       // Remove photo from routeData (sessions)
       const sessions = JSON.parse(localStorage.getItem("sessions") || "[]");
@@ -2778,15 +2610,6 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
   }
 });
 
-
-//   } else if (ext === "gpx") {
-//     alert("⚠️ GPX import not implemented yet.");
-//     // Optional: we can use a library to parse GPX if you’d like
-//   } else {
-//     alert("❌ Unsupported file type.");
-//   }
-// });
-
 async function enrichRouteWithElevation(data) {
   const enriched = [];
   for (const entry of data) {
@@ -2802,8 +2625,7 @@ async function enrichRouteWithElevation(data) {
   }
   return enriched;
 }
-
-
+  
 async function getElevation(lat, lng) {
   const url = `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`;
 
@@ -2988,5 +2810,4 @@ async function generateElevationChartCanvas(route) {
   });
 
   return canvas;
-}
 }
